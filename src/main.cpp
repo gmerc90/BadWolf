@@ -29,6 +29,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 using namespace std;
 
+//prints out hex_map from map.h
+void render_hex_map()
+{
+    int x, y;
+    for(y = 0; y <= 25; y++)
+    {
+        for(x = 0; x <= 80; x++ )
+            mvaddch(y, x, hex_map[y][x]);
+    }
+}
 int main(int argc, char *argv[])
 {
     int ch;
@@ -41,7 +51,7 @@ int main(int argc, char *argv[])
     keypad(stdscr, TRUE);
     noecho();
 
-    printw("%s", hex_map);
+    render_hex_map();
     refresh();
 
     getch();

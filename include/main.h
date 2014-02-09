@@ -32,7 +32,8 @@ class main
 {
     public:
         main();
-        virtual ~main();
+
+        void render_hex_map();
     protected:
     private:
 };
