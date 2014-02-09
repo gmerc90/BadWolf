@@ -24,7 +24,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 #include <ncurses.h>
+#include "main.h"
+#include "map.h"
 
+using namespace std;
 
 int main(int argc, char *argv[])
 {
@@ -38,4 +41,12 @@ int main(int argc, char *argv[])
     keypad(stdscr, TRUE);
     noecho();
 
+    printw("%s", hex_map);
+    refresh();
+
+    getch();
+
+    //terminate program
+    endwin();
+    return 0;
 }
