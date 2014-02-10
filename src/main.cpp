@@ -27,17 +27,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include "main.h"
 #include "map.h"
 
-void render_hex_map();
+
 void destroy_window(WINDOW *local_win);
-
 int check_for_edge();
-
+void render_hex_map(char game_map[25][81]);
 WINDOW *create_player_window(int height, int width, int startx, int starty);
+
+struct player{
+    int posy;
+    int posx;
+};
 
 int main(int argc, char *argv[]){
     WINDOW *player_window;
     int ch;
     int height, width, starty, startx;
+    char game_map[25][81];
 
     //standard starting stuff for Curses
     initscr();
@@ -46,8 +51,11 @@ int main(int argc, char *argv[]){
     keypad(stdscr, TRUE);
     noecho();
 
+    //color initialization
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+
     //show initial map
-    render_hex_map();
+    render_hex_map(game_map);
 
     //set initial player window values
     height = 1;
@@ -100,9 +108,9 @@ WINDOW *create_player_window(int height, int width, int starty, int startx){
 
 //checks to see if player is trying to move out of the map
 
-int check_for_edge(){
+/*int check_for_edge(){
 
-}
+}*/
 
 //destroys player window
 void destroy_window(WINDOW *local_win){
@@ -112,18 +120,44 @@ void destroy_window(WINDOW *local_win){
 }
 
 //prints out hex_map from map.h
-void render_hex_map(){
+void render_hex_map(char game_map[25][81]){
     int x, y;
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    for(y = 0; y <= 25; y++){
-        for(x = 0; x <= 80; x++ ){
-            if(hex_map[y][x] == '#'){
-                attron(COLOR_PAIR(1));
-                mvaddch(y, x, hex_map[y][x]);
-                attroff(COLOR_PAIR(1));
-            }else
-                mvaddch(y, x, hex_map[y][x]);
+    int loop_count = 1;
+    for(x = 0; x <= 79; x++){
+        attron(COLOR_PAIR(1));
+        mvaddch(0, x, '#');
+        mvaddch(24, x, '#');
+        attroff(COLOR_PAIR(1));
+    }
+    for(y = 0; y <= 24; y++){
+        attron(COLOR_PAIR(1));
+        mvaddch(y, 0, '#');
+        mvaddch(y, 79, '#');
+        attroff(COLOR_PAIR(1));
+    }
+    for(y = 1; y < 24; y++){
+        int x2;
+        if(loop_count = 1){
+            for(x2 = 1; x2 < 79; x2++){
+                mvaddch(y, x2, hex_map_piece_1[0][x2]);
+            }
+            loop_count = 2;
+        }else if(loop_count = 2){
+            for(x2 = 1; x2 < 79; x2++){
+                mvaddch(y, x2, hex_map_piece_2[0][x2]);
+            }
+            loop_count = 3;
+        }else if(loop_count = 3){
+            for(x2 = 1; x2 < 79; x2++){
+                mvaddch(y, x2, hex_map_piece_3[0][x2]);
+            }
+            loop_count = 4;
+        }else if (loop_count = 4){
+            for(x2 = 1; x2 < 79; x2++){
+                mvaddch(y, x2, hex_map_piece_4[0][x2]);
+            }
+            loop_count = 1;
         }
     }
-    refresh();
 }
+
