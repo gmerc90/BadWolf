@@ -27,6 +27,69 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include "main.h"
 #include "map.h"
 
+void render_hex_map();
+void destroy_window(WINDOW *local_win);
+
+WINDOW *create_player_window(int height, int width, int startx, int starty);
+
+int main(int argc, char *argv[])
+{
+    WINDOW *player_window;
+    int ch;
+    int height, width, starty, startx;
+
+    //standard starting stuff for Curses
+
+    initscr();
+    start_color();
+    cbreak();
+    keypad(stdscr, TRUE);
+    noecho();
+
+    //show initial map
+    render_hex_map();
+    refresh();
+
+    //set initial player window values
+
+    height = 1;
+    width = 1;
+    starty = (LINES - height)/2;
+    startx = (COLS - width)/2;
+
+    //display player window
+    player_window = create_player_window(height, width, starty, startx);
+
+
+    //check for movement keys
+    while((ch = getch()) != KEY_F(1))
+    {
+        switch(ch)
+        {
+            case KEY_LEFT:
+                destroy_window(player_window);
+                player_window = create_player_window(height, width, starty, --startx);
+                break;
+            case KEY_RIGHT:
+                destroy_window(player_window);
+                player_window = create_player_window(height, width, starty, ++startx);
+                break;
+            case KEY_UP:
+                destroy_window(player_window);
+                player_window = create_player_window(height, width, --starty, startx);
+                break;
+            case KEY_DOWN:
+                destroy_window(player_window);
+                player_window = create_player_window(height, width, ++starty, startx);
+                break;
+        }
+    }
+
+    //terminate program
+    endwin();
+    return 0;
+}
+
 //draws player window
 WINDOW *create_player_window(int height, int width, int starty, int startx)
 {
@@ -34,9 +97,10 @@ WINDOW *create_player_window(int height, int width, int starty, int startx)
 
     local_win = newwin(height, width, starty, startx);
     box(local_win, 0 , 0);
-    //wprintw(local_win, "@");
+    wprintw(local_win, "@");
 
     wrefresh(local_win);
+    render_hex_map();
     return local_win;
 }
 
@@ -57,79 +121,4 @@ void render_hex_map()
         for(x = 0; x <= 80; x++ )
             mvaddch(y, x, hex_map[y][x]);
     }
-}
-
-int main(int argc, char *argv[])
-{
-    WINDOW *player_window;
-    int ch;
-    int height, width, starty, startx;
-
-    //standard starting stuff for Curses
-
-    initscr();
-    start_color();
-    cbreak();
-    keypad(stdscr, TRUE);
-    //noecho();
-
-    //show initial map
-    render_hex_map();
-    refresh();
-
-    //set initial player window values
-
-    height = 1;
-    width = 1;
-    starty = (LINES - height)/2;
-    startx = (COLS - width)/2;
-
-    //display player window
-    player_window = create_player_window(height, width, starty, startx);
-
-
-    //check for movement keys
-    while((ch = getch()) != KEY_F(1));
-    {
-        /*if(ch = KEY_LEFT){
-            destroy_window(player_window);
-            player_window = create_player_window(height, width, starty, --startx);
-        }else if(ch = KEY_RIGHT){
-            destroy_window(player_window);
-            player_window = create_player_window(height, width, startx, ++startx);
-        }else if(ch = KEY_UP){
-            destroy_window(player_window);
-            player_window = create_player_window(height, width, --starty, startx);
-        }else if(ch = KEY_DOWN){
-            destroy_window(player_window);
-            player_window = create_player_window(height, width, ++starty, startx);
-        }*/
-        switch(ch)
-        {
-            case KEY_LEFT:
-                printw("left");
-                destroy_window(player_window);
-                player_window = create_player_window(height, width, starty, --startx);
-                break;
-            case KEY_RIGHT:
-                printw("right");
-                destroy_window(player_window);
-                player_window = create_player_window(height, width, starty, ++startx);
-                break;
-            case KEY_UP:
-                printw("up");
-                destroy_window(player_window);
-                player_window = create_player_window(height, width, --starty, startx);
-                break;
-            case KEY_DOWN:
-                printw("down");
-                destroy_window(player_window);
-                player_window = create_player_window(height, width, ++starty, startx);
-                break;
-        }
-    }
-
-    //terminate program
-    endwin();
-    return 0;
 }
