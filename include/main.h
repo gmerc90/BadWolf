@@ -34,6 +34,7 @@ class main
         main();
 
     protected:
+
     private:
         void render_hex_map(char game_map[25][81]);
         //player movement variables

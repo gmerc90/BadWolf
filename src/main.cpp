@@ -121,8 +121,9 @@ void destroy_window(WINDOW *local_win){
 
 //prints out hex_map from map.h
 void render_hex_map(char game_map[25][81]){
+
+    //print the # border in red
     int x, y;
-    int loop_count = 1;
     for(x = 0; x <= 79; x++){
         attron(COLOR_PAIR(1));
         mvaddch(0, x, '#');
@@ -135,28 +136,36 @@ void render_hex_map(char game_map[25][81]){
         mvaddch(y, 79, '#');
         attroff(COLOR_PAIR(1));
     }
+
+    //print the pieces of the map until full
+    int x2, y2;
+    int piece_number = 1;
     for(y = 1; y < 24; y++){
-        int x2;
-        if(loop_count = 1){
-            for(x2 = 1; x2 < 79; x2++){
-                mvaddch(y, x2, hex_map_piece_1[0][x2]);
-            }
-            loop_count = 2;
-        }else if(loop_count = 2){
-            for(x2 = 1; x2 < 79; x2++){
-                mvaddch(y, x2, hex_map_piece_2[0][x2]);
-            }
-            loop_count = 3;
-        }else if(loop_count = 3){
-            for(x2 = 1; x2 < 79; x2++){
-                mvaddch(y, x2, hex_map_piece_3[0][x2]);
-            }
-            loop_count = 4;
-        }else if (loop_count = 4){
-            for(x2 = 1; x2 < 79; x2++){
-                mvaddch(y, x2, hex_map_piece_4[0][x2]);
-            }
-            loop_count = 1;
+        switch(piece_number){
+            case 1:
+                for(x2 = 1; x2 < 79; x2++){
+                    mvaddch(y, x2, hex_map_piece_1[0][x2]);
+                }
+                piece_number = 2;
+                break;
+            case 2:
+                for(x2 = 1; x2 < 79; x2++){
+                    mvaddch(y, x2, hex_map_piece_2[0][x2]);
+                }
+                piece_number = 3;
+                break;
+            case 3:
+                for(x2 = 1; x2 < 79; x2++){
+                    mvaddch(y, x2, hex_map_piece_3[0][x2]);
+                }
+                piece_number = 4;
+                break;
+            case 4:
+                for(x2 = 1; x2 < 79; x2++){
+                    mvaddch(y, x2, hex_map_piece_4[0][x2]);
+                }
+                piece_number = 1;
+                break;
         }
     }
 }
