@@ -33,9 +33,17 @@ class main
     public:
         main();
 
-        void render_hex_map();
     protected:
     private:
+        void render_hex_map();
+
+        int height;
+        int width;
+        int startx;
+        int starty;
+
+        void destroy_window(WINDOW *local_win);
+        WINDOW *create_player_window(int height, int width, int startx, int starty);
 };
 
 #endif // MAIN_H
