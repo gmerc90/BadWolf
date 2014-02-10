@@ -37,11 +37,16 @@ class main
     private:
         void render_hex_map();
 
+        //player movement variables
+
         int height;
         int width;
         int startx;
         int starty;
 
+        //player movement functions
+
+        int check_for_edge();
         void destroy_window(WINDOW *local_win);
         WINDOW *create_player_window(int height, int width, int startx, int starty);
 };
