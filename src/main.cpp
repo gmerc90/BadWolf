@@ -32,6 +32,7 @@ bool check_for_edge(char game_map[25][81], player_struct player);
 
 void initial_map_setup(char game_map[25][81], player_struct player);
 void map_refresh(char game_map[25][81]);
+void toggle_hex_status(char game_map[25][81], player_struct player);
 
 int main(int argc, char *argv[]){
     int ch;
@@ -46,6 +47,8 @@ int main(int argc, char *argv[]){
 
     //color initialization
     init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(3, COLOR_MAGENTA, COLOR_MAGENTA);
 
     //set initial position and initialize the player
     player_struct player;
@@ -58,8 +61,13 @@ int main(int argc, char *argv[]){
 
     //main game loop
     while((ch = getch()) != KEY_F(1)){
+
+        /*checks to see if a key was pressed,
+        if one has been, it performs the necessary code to
+        complete the desired action*/
         switch(ch){
-            case KEY_LEFT:
+            //move left
+            case 'a':
                 player.replace_character_new = game_map[player.posy][player.posx - 1];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
@@ -71,8 +79,10 @@ int main(int argc, char *argv[]){
                 }else{
                     player.posx = player.posx + 1;
                 }
+                map_refresh(game_map);
                 break;
-            case KEY_RIGHT:
+            //move right
+            case 'd':
                 player.replace_character_new = game_map[player.posy][player.posx + 1];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
@@ -84,8 +94,10 @@ int main(int argc, char *argv[]){
                 }else{
                     player.posx = player.posx - 1;
                 }
+                map_refresh(game_map);
                 break;
-            case KEY_UP:
+            //move up
+            case 'w':
                 player.replace_character_new = game_map[player.posy - 1][player.posx];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
@@ -97,8 +109,10 @@ int main(int argc, char *argv[]){
                 }else{
                     player.posy = player.posy + 1;
                 }
+                map_refresh(game_map);
                 break;
-            case KEY_DOWN:
+            //move down
+            case 's':
                 player.replace_character_new = game_map[player.posy + 1][player.posx];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
@@ -108,17 +122,66 @@ int main(int argc, char *argv[]){
                     game_map[player.posy][player.posx] = player.player_character;
                     player.replace_character = player.replace_character_new;
                 }else{
-                    player.posy
-                     = player.posy - 1;
+                    player.posy = player.posy - 1;
                 }
+                map_refresh(game_map);
+                break;
+            //select a cell
+            case 'e':
+                toggle_hex_status(game_map, player);
+                map_refresh(game_map);
                 break;
         }
-        map_refresh(game_map);
     }
 
     //terminate program
     endwin();
     return 0;
+}
+
+//change the state of the hex cube to selected or not
+void toggle_hex_status(char game_map[25][81], player_struct player){
+    bool checked_x_pos, checked_y_pos, checked_x_neg, checked_y_neg;
+    checked_x_pos = false;
+    checked_y_pos = false;
+    checked_x_neg = false;
+    checked_y_neg = false;
+    int x = 1;
+    int y = 0;
+    //until all positive x and y and negative x and y values from the player have been checked, this loop will run
+    while(checked_x_pos != true && checked_y_pos != true && checked_x_neg != true && checked_y_neg != true){
+        //goes through checks, and replaces positive y's with .
+        while(checked_y_pos != true){
+            if(game_map[player.posy + y][player.posx] == ' '){
+                game_map[player.posy + y][player.posx] = '.';
+                //goes through and checks positive x's with . for the corresponding row y
+                while(checked_x_pos != true){
+                    if(game_map[player.posy + y][player.posx + x] == ' '){
+                        game_map[player.posy + y][player.posx + x] = '.';
+                    }else if(game_map[player.posy + y][player.posx + x] == '*'){
+                        checked_x_pos = true;
+                    }
+                    x = x + 1;
+                }
+            }else if(game_map[player.posy+ y][player.posx]== '@'){
+                 //checks the positive x values in the player row and replaces with .
+                 while(checked_x_pos != true){
+                    if(game_map[player.posy + y][player.posx + x] == ' '){
+                        game_map[player.posy + y][player.posx + x] = '.';
+                    }else if(game_map[player.posy + y][player.posx + x] == '*'){
+                        checked_x_pos = true;
+                    }
+                    x = x + 1;
+                }
+            }else if(game_map[player.posy + y][player.posx] == '*'){
+                checked_y_pos = true;
+                checked_x_pos = true;
+            }
+            checked_x_pos = false;
+            x = 1;
+            y = y + 1;
+        }
+    }
 }
 
 //checks to see if player is trying to move out of the map
@@ -176,6 +239,8 @@ void initial_map_setup(char game_map[25][81], player_struct player){
                 break;
         }
     }
+
+    //put player in their initial position
     game_map[player.posy][player.posx] = player.player_character;
 }
 
@@ -188,6 +253,14 @@ void map_refresh(char game_map[25][81]){
                 attron(COLOR_PAIR(1));
                 mvaddch(y, x, game_map[y][x]);
                 attroff(COLOR_PAIR(1));
+            }else if(game_map[y][x] == '@'){
+                attron(COLOR_PAIR(2));
+                mvaddch(y, x, game_map[y][x]);
+                attroff(COLOR_PAIR(2));
+            }else if(game_map[y][x] == '.'){
+                attron(COLOR_PAIR(3));
+                mvaddch(y, x, game_map[y][x]);
+                attroff(COLOR_PAIR(3));
             }else{
                 mvaddch(y, x, game_map[y][x]);
             }

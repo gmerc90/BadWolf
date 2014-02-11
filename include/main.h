@@ -39,8 +39,8 @@ class main
 
         void initial_map_setup(char game_map[25][81], player_struct player);
         void map_refresh(char game_map[25][81]);
+        void toggle_hex_status(char game_map[25][81], player_struct player);
 
-        //player movement functions
         bool check_for_edge(char game_map[25][81], player_struct player);
 
 };
