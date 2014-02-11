@@ -27,23 +27,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include "main.h"
 #include "map.h"
 
-int check_for_edge();
-
-void destroy_window(WINDOW *local_win);
-void initial_map_setup(char game_map[25][81]);
-void map_refresh(char game_map[25][81]);
-
-WINDOW *create_player_window(int height, int width, int startx, int starty);
-
-struct player{
+struct player_struct{
     int posy;
     int posx;
+    int old_posy;
+    int old_posx;
+    char figure = '@';
+    char old_tile;
 };
 
+bool check_for_edge(char game_map[25][81]);
+
+void initial_map_setup(char game_map[25][81], player_struct player);
+void map_refresh(char game_map[25][81]);
+
 int main(int argc, char *argv[]){
-    WINDOW *player_window;
     int ch;
-    int height, width, starty, startx;
     char game_map[25][81];
 
     //standard starting stuff for Curses
@@ -56,40 +55,44 @@ int main(int argc, char *argv[]){
     //color initialization
     init_pair(1, COLOR_RED, COLOR_BLACK);
 
+    //set initial position and initialize the player
+    player_struct player;
+    player.posy = LINES/2;
+    player.posx = COLS/2;
+
     //show initial map
-    initial_map_setup(game_map);
+    initial_map_setup(game_map, player);
     map_refresh(game_map);
 
-    //set initial player window values
-    height = 1;
-    width = 1;
-    starty = (LINES - height)/2;
-    startx = (COLS - width)/2;
-
-    //display player window
-    player_window = create_player_window(height, width, starty, startx);
-
-
-    //check for movement keys
+    //main game loop
     while((ch = getch()) != KEY_F(1)){
         switch(ch){
             case KEY_LEFT:
-                destroy_window(player_window);
-                player_window = create_player_window(height, width, starty, --startx);
+                player.old_posx = player.posx;
+                player.old_posy = player.posy;
+                game_map[player.old_posy][player.old_posx] = NULL;
+                game_map[player.posy][player.posx--] = player.figure;
                 break;
             case KEY_RIGHT:
-                destroy_window(player_window);
-                player_window = create_player_window(height, width, starty, ++startx);
+                player.old_posx = player.posx;
+                player.old_posy = player.posy;
+                game_map[player.old_posy][player.old_posx] = NULL;
+                game_map[player.posy][player.posx++] = player.figure;
                 break;
             case KEY_UP:
-                destroy_window(player_window);
-                player_window = create_player_window(height, width, --starty, startx);
+                player.old_posx = player.posx;
+                player.old_posy = player.posy;
+                game_map[player.old_posy][player.old_posx] = NULL;
+                game_map[player.posy--][player.posx] = player.figure;
                 break;
             case KEY_DOWN:
-                destroy_window(player_window);
-                player_window = create_player_window(height, width, ++starty, startx);
+                player.old_posx = player.posx;
+                player.old_posy = player.posy;
+                game_map[player.old_posy][player.old_posx] = NULL;
+                game_map[player.posy++][player.posx] = player.figure;
                 break;
         }
+        map_refresh(game_map);
     }
 
     //terminate program
@@ -97,33 +100,13 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-//draws player window
-WINDOW *create_player_window(int height, int width, int starty, int startx){
-    WINDOW *local_win;
-
-    local_win = newwin(height, width, starty, startx);
-    box(local_win, 0 , 0);
-    wprintw(local_win, "@");
-
-    wrefresh(local_win);
-    return local_win;
-}
-
 //checks to see if player is trying to move out of the map
-
-/*int check_for_edge(){
-
-}*/
-
-//destroys player window
-void destroy_window(WINDOW *local_win){
-    wborder(local_win,' ',' ',' ',' ',' ',' ',' ',' ');
-    wrefresh(local_win);
-    delwin(local_win);
+bool check_for_edge(char game_map[25][81]){
+    return false;
 }
 
 //prints out hex_map from map.h
-void initial_map_setup(char game_map[25][81]){
+void initial_map_setup(char game_map[25][81], player_struct player){
 
     //print the # border in red
     int x, y;
@@ -167,6 +150,7 @@ void initial_map_setup(char game_map[25][81]){
                 break;
         }
     }
+    game_map[player.posy][player.posx] = player.figure;
 }
 
 void map_refresh(char game_map[25][81]){

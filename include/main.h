@@ -32,27 +32,25 @@ class main
 {
     public:
 
+        struct player_struct{
+            int posy;
+            int posx;
+            int old_posy;
+            int old_posx;
+            char figure = '@';
+            char old_tile;
+        };
         char game_map[25][81];
 
     protected:
 
     private:
 
-        void initial_map_setup(char game_map[25][81]);
+        void initial_map_setup(char game_map[25][81], player_struct player);
         void map_refresh(char game_map[25][81]);
 
-        //player movement variables
-
-        int height;
-        int width;
-        int startx;
-        int starty;
-
         //player movement functions
-
-        int check_for_edge();
-        void destroy_window(WINDOW *local_win);
-        WINDOW *create_player_window(int height, int width, int startx, int starty);
+        bool check_for_edge(char game_map[25][81]);
 };
 
 #endif // MAIN_H
