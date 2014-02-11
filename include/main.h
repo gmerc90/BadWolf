@@ -41,7 +41,7 @@ class main
         void map_refresh(char game_map[25][81]);
 
         //player movement functions
-        bool check_for_edge(char game_map[25][81]);
+        bool check_for_edge(char game_map[25][81], player_struct player);
 
 };
 

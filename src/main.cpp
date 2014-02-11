@@ -28,7 +28,7 @@ struct player_struct{
     char replace_character_new;
 };
 
-bool check_for_edge(char game_map[25][81]);
+bool check_for_edge(char game_map[25][81], player_struct player);
 
 void initial_map_setup(char game_map[25][81], player_struct player);
 void map_refresh(char game_map[25][81]);
@@ -64,36 +64,53 @@ int main(int argc, char *argv[]){
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posx = player.posx - 1;
-                game_map[player.old_posy][player.old_posx] = player.replace_character;
-                game_map[player.posy][player.posx] = player.player_character;
-                player.replace_character = player.replace_character_new;
+                if(check_for_edge(game_map, player) == false){
+                    game_map[player.old_posy][player.old_posx] = player.replace_character;
+                    game_map[player.posy][player.posx] = player.player_character;
+                    player.replace_character = player.replace_character_new;
+                }else{
+                    player.posx = player.posx + 1;
+                }
                 break;
             case KEY_RIGHT:
                 player.replace_character_new = game_map[player.posy][player.posx + 1];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posx = player.posx + 1;
-                game_map[player.old_posy][player.old_posx] = player.replace_character;
-                game_map[player.posy][player.posx] = player.player_character;
-                player.replace_character = player.replace_character_new;
+                if(check_for_edge(game_map, player) == false){
+                    game_map[player.old_posy][player.old_posx] = player.replace_character;
+                    game_map[player.posy][player.posx] = player.player_character;
+                    player.replace_character = player.replace_character_new;
+                }else{
+                    player.posx = player.posx - 1;
+                }
                 break;
             case KEY_UP:
                 player.replace_character_new = game_map[player.posy - 1][player.posx];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posy = player.posy - 1;
-                game_map[player.old_posy][player.old_posx] = player.replace_character;
-                game_map[player.posy][player.posx] = player.player_character;
-                player.replace_character = player.replace_character_new;
+                if(check_for_edge(game_map, player) == false){
+                    game_map[player.old_posy][player.old_posx] = player.replace_character;
+                    game_map[player.posy][player.posx] = player.player_character;
+                    player.replace_character = player.replace_character_new;
+                }else{
+                    player.posy = player.posy + 1;
+                }
                 break;
             case KEY_DOWN:
                 player.replace_character_new = game_map[player.posy + 1][player.posx];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posy = player.posy + 1;
-                game_map[player.old_posy][player.old_posx] = player.replace_character;
-                game_map[player.posy][player.posx] = player.player_character;
-                player.replace_character = player.replace_character_new;
+                if(check_for_edge(game_map, player) == false){
+                    game_map[player.old_posy][player.old_posx] = player.replace_character;
+                    game_map[player.posy][player.posx] = player.player_character;
+                    player.replace_character = player.replace_character_new;
+                }else{
+                    player.posy
+                     = player.posy - 1;
+                }
                 break;
         }
         map_refresh(game_map);
@@ -105,8 +122,13 @@ int main(int argc, char *argv[]){
 }
 
 //checks to see if player is trying to move out of the map
-bool check_for_edge(char game_map[25][81]){
-    return false;
+bool check_for_edge(char game_map[25][81], player_struct player){
+    char test_char = game_map[player.posy][player.posx];
+    if(test_char == '#'){
+        return true;
+    }else{
+        return false;
+    }
 }
 
 //prints out hex_map from map.h
