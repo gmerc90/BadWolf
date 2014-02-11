@@ -27,10 +27,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include "main.h"
 #include "map.h"
 
+int check_for_edge();
 
 void destroy_window(WINDOW *local_win);
-int check_for_edge();
-void render_hex_map(char game_map[25][81]);
+void initial_map_setup(char game_map[25][81]);
+void map_refresh(char game_map[25][81]);
+
 WINDOW *create_player_window(int height, int width, int startx, int starty);
 
 struct player{
@@ -55,7 +57,8 @@ int main(int argc, char *argv[]){
     init_pair(1, COLOR_RED, COLOR_BLACK);
 
     //show initial map
-    render_hex_map(game_map);
+    initial_map_setup(game_map);
+    map_refresh(game_map);
 
     //set initial player window values
     height = 1;
@@ -120,49 +123,45 @@ void destroy_window(WINDOW *local_win){
 }
 
 //prints out hex_map from map.h
-void render_hex_map(char game_map[25][81]){
+void initial_map_setup(char game_map[25][81]){
 
     //print the # border in red
     int x, y;
     for(x = 0; x <= 79; x++){
-        attron(COLOR_PAIR(1));
-        mvaddch(0, x, '#');
-        mvaddch(24, x, '#');
-        attroff(COLOR_PAIR(1));
+        game_map[0][x] = '#';
+        game_map[24][x] = '#';
     }
     for(y = 0; y <= 24; y++){
-        attron(COLOR_PAIR(1));
-        mvaddch(y, 0, '#');
-        mvaddch(y, 79, '#');
-        attroff(COLOR_PAIR(1));
+        game_map[y][0] = '#';
+        game_map[y][79] = '#';
     }
 
     //print the pieces of the map until full
-    int x2, y2;
+    int x2;
     int piece_number = 1;
     for(y = 1; y < 24; y++){
         switch(piece_number){
             case 1:
                 for(x2 = 1; x2 < 79; x2++){
-                    mvaddch(y, x2, hex_map_piece_1[0][x2]);
+                    game_map[y][x2] = hex_map_piece_1[0][x2];
                 }
                 piece_number = 2;
                 break;
             case 2:
                 for(x2 = 1; x2 < 79; x2++){
-                    mvaddch(y, x2, hex_map_piece_2[0][x2]);
+                    game_map[y][x2] = hex_map_piece_2[0][x2];
                 }
                 piece_number = 3;
                 break;
             case 3:
                 for(x2 = 1; x2 < 79; x2++){
-                    mvaddch(y, x2, hex_map_piece_3[0][x2]);
+                    game_map[y][x2] = hex_map_piece_3[0][x2];
                 }
                 piece_number = 4;
                 break;
             case 4:
                 for(x2 = 1; x2 < 79; x2++){
-                    mvaddch(y, x2, hex_map_piece_4[0][x2]);
+                    game_map[y][x2] = hex_map_piece_4[0][x2];
                 }
                 piece_number = 1;
                 break;
@@ -170,3 +169,17 @@ void render_hex_map(char game_map[25][81]){
     }
 }
 
+void map_refresh(char game_map[25][81]){
+    int x, y;
+    for(y = 0; y <=24; y++){
+        for(x = 0; x <=79; x++){
+            if(game_map[y][x] == '#'){
+                attron(COLOR_PAIR(1));
+                mvaddch(y, x, game_map[y][x]);
+                attroff(COLOR_PAIR(1));
+            }else{
+                mvaddch(y, x, game_map[y][x]);
+            }
+        }
+    }
+}

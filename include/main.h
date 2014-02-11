@@ -31,12 +31,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 class main
 {
     public:
-        main();
+
+        char game_map[25][81];
 
     protected:
 
     private:
-        void render_hex_map(char game_map[25][81]);
+
+        void initial_map_setup(char game_map[25][81]);
+        void map_refresh(char game_map[25][81]);
+
         //player movement variables
 
         int height;
