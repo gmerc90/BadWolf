@@ -1,27 +1,18 @@
-/*Copyright (c) 2014, Gary Mercado(errdividedby0)
-All rights reserved.
+/*  BadWolf
+    Copyright (C) 2014  Gary Mercado (errdivideby0)
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of errdivideby0 nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL errdivideby0 BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <ncurses.h>
 #include "main.h"
@@ -40,6 +31,7 @@ bool check_for_edge(char game_map[25][81]);
 
 void initial_map_setup(char game_map[25][81], player_struct player);
 void map_refresh(char game_map[25][81]);
+void set_old_tile(player_struct player);
 
 int main(int argc, char *argv[]){
     int ch;
@@ -70,26 +62,30 @@ int main(int argc, char *argv[]){
             case KEY_LEFT:
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
-                game_map[player.old_posy][player.old_posx] = NULL;
-                game_map[player.posy][player.posx--] = player.figure;
+                player.posx = player.posx - 1;
+                game_map[player.old_posy][player.old_posx] = ' ';
+                game_map[player.posy][player.posx] = player.figure;
                 break;
             case KEY_RIGHT:
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
-                game_map[player.old_posy][player.old_posx] = NULL;
-                game_map[player.posy][player.posx++] = player.figure;
+                player.posx = player.posx + 1;
+                game_map[player.old_posy][player.old_posx] = ' ';
+                game_map[player.posy][player.posx] = player.figure;
                 break;
             case KEY_UP:
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
-                game_map[player.old_posy][player.old_posx] = NULL;
-                game_map[player.posy--][player.posx] = player.figure;
+                player.posy = player.posy - 1;
+                game_map[player.old_posy][player.old_posx] = ' ';
+                game_map[player.posy][player.posx] = player.figure;
                 break;
             case KEY_DOWN:
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
-                game_map[player.old_posy][player.old_posx] = NULL;
-                game_map[player.posy++][player.posx] = player.figure;
+                player.posy = player.posy + 1;
+                game_map[player.old_posy][player.old_posx] = ' ';
+                game_map[player.posy][player.posx] = player.figure;
                 break;
         }
         map_refresh(game_map);
@@ -99,6 +95,8 @@ int main(int argc, char *argv[]){
     endwin();
     return 0;
 }
+//set the tile to be replaced once player has moved off a space
+void set_old_tile(player_struct player);
 
 //checks to see if player is trying to move out of the map
 bool check_for_edge(char game_map[25][81]){
@@ -153,6 +151,7 @@ void initial_map_setup(char game_map[25][81], player_struct player){
     game_map[player.posy][player.posx] = player.figure;
 }
 
+//refreshes the map to show any changes that have been made
 void map_refresh(char game_map[25][81]){
     int x, y;
     for(y = 0; y <=24; y++){
@@ -166,4 +165,5 @@ void map_refresh(char game_map[25][81]){
             }
         }
     }
+    refresh();
 }
