@@ -23,15 +23,15 @@ struct player_struct{
     int posx;
     int old_posy;
     int old_posx;
-    char figure = '@';
-    char old_tile;
+    char player_character = '@';
+    char replace_character;
+    char replace_character_new;
 };
 
 bool check_for_edge(char game_map[25][81]);
 
 void initial_map_setup(char game_map[25][81], player_struct player);
 void map_refresh(char game_map[25][81]);
-void set_old_tile(player_struct player);
 
 int main(int argc, char *argv[]){
     int ch;
@@ -60,32 +60,40 @@ int main(int argc, char *argv[]){
     while((ch = getch()) != KEY_F(1)){
         switch(ch){
             case KEY_LEFT:
+                player.replace_character_new = game_map[player.posy][player.posx - 1];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posx = player.posx - 1;
-                game_map[player.old_posy][player.old_posx] = ' ';
-                game_map[player.posy][player.posx] = player.figure;
+                game_map[player.old_posy][player.old_posx] = player.replace_character;
+                game_map[player.posy][player.posx] = player.player_character;
+                player.replace_character = player.replace_character_new;
                 break;
             case KEY_RIGHT:
+                player.replace_character_new = game_map[player.posy][player.posx + 1];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posx = player.posx + 1;
-                game_map[player.old_posy][player.old_posx] = ' ';
-                game_map[player.posy][player.posx] = player.figure;
+                game_map[player.old_posy][player.old_posx] = player.replace_character;
+                game_map[player.posy][player.posx] = player.player_character;
+                player.replace_character = player.replace_character_new;
                 break;
             case KEY_UP:
+                player.replace_character_new = game_map[player.posy - 1][player.posx];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posy = player.posy - 1;
-                game_map[player.old_posy][player.old_posx] = ' ';
-                game_map[player.posy][player.posx] = player.figure;
+                game_map[player.old_posy][player.old_posx] = player.replace_character;
+                game_map[player.posy][player.posx] = player.player_character;
+                player.replace_character = player.replace_character_new;
                 break;
             case KEY_DOWN:
+                player.replace_character_new = game_map[player.posy + 1][player.posx];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posy = player.posy + 1;
-                game_map[player.old_posy][player.old_posx] = ' ';
-                game_map[player.posy][player.posx] = player.figure;
+                game_map[player.old_posy][player.old_posx] = player.replace_character;
+                game_map[player.posy][player.posx] = player.player_character;
+                player.replace_character = player.replace_character_new;
                 break;
         }
         map_refresh(game_map);
@@ -95,8 +103,6 @@ int main(int argc, char *argv[]){
     endwin();
     return 0;
 }
-//set the tile to be replaced once player has moved off a space
-void set_old_tile(player_struct player);
 
 //checks to see if player is trying to move out of the map
 bool check_for_edge(char game_map[25][81]){
@@ -148,7 +154,7 @@ void initial_map_setup(char game_map[25][81], player_struct player){
                 break;
         }
     }
-    game_map[player.posy][player.posx] = player.figure;
+    game_map[player.posy][player.posx] = player.player_character;
 }
 
 //refreshes the map to show any changes that have been made

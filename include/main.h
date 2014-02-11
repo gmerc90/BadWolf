@@ -27,8 +27,9 @@ class main
             int posx;
             int old_posy;
             int old_posx;
-            char figure = '@';
-            char old_tile;
+            char player_character = '@';
+            char replace_character;
+            char replace_character_new;
         };
         char game_map[25][81];
 
@@ -41,6 +42,7 @@ class main
 
         //player movement functions
         bool check_for_edge(char game_map[25][81]);
+
 };
 
 #endif // MAIN_H
