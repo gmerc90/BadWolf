@@ -41,7 +41,10 @@ class main
         void map_refresh(char game_map[25][81]);
         void toggle_hex_status(char game_map[25][81], player_struct player);
 
-        bool check_for_edge(char game_map[25][81], player_struct player);
+        bool toggle_hex_on(char game_map[25][81], player_struct player);
+
+
+
 
 };
 

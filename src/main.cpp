@@ -28,11 +28,11 @@ struct player_struct{
     char replace_character_new;
 };
 
-bool check_for_edge(char game_map[25][81], player_struct player);
-
 void initial_map_setup(char game_map[25][81], player_struct player);
 void map_refresh(char game_map[25][81]);
 void toggle_hex_status(char game_map[25][81], player_struct player);
+
+bool check_for_edge(char game_map[25][81], player_struct player);
 
 int main(int argc, char *argv[]){
     int ch;
@@ -67,36 +67,6 @@ int main(int argc, char *argv[]){
         if one has been, it performs the necessary code to
         complete the desired action*/
         switch(ch){
-            //move left
-            case 'a':
-                player.replace_character_new = game_map[player.posy][player.posx - 1];
-                player.old_posx = player.posx;
-                player.old_posy = player.posy;
-                player.posx = player.posx - 1;
-                if(check_for_edge(game_map, player) == false){
-                    game_map[player.old_posy][player.old_posx] = player.replace_character;
-                    game_map[player.posy][player.posx] = player.player_character;
-                    player.replace_character = player.replace_character_new;
-                }else{
-                    player.posx = player.posx + 1;
-                }
-                map_refresh(game_map);
-                break;
-            //move right
-            case 'd':
-                player.replace_character_new = game_map[player.posy][player.posx + 1];
-                player.old_posx = player.posx;
-                player.old_posy = player.posy;
-                player.posx = player.posx + 1;
-                if(check_for_edge(game_map, player) == false){
-                    game_map[player.old_posy][player.old_posx] = player.replace_character;
-                    game_map[player.posy][player.posx] = player.player_character;
-                    player.replace_character = player.replace_character_new;
-                }else{
-                    player.posx = player.posx - 1;
-                }
-                map_refresh(game_map);
-                break;
             //move up
             case 'w':
                 player.replace_character_new = game_map[player.posy - 1][player.posx];
@@ -112,6 +82,21 @@ int main(int argc, char *argv[]){
                 }
                 map_refresh(game_map);
                 break;
+            //move left
+            case 'a':
+                player.replace_character_new = game_map[player.posy][player.posx - 1];
+                player.old_posx = player.posx;
+                player.old_posy = player.posy;
+                player.posx = player.posx - 1;
+                if(check_for_edge(game_map, player) == false){
+                    game_map[player.old_posy][player.old_posx] = player.replace_character;
+                    game_map[player.posy][player.posx] = player.player_character;
+                    player.replace_character = player.replace_character_new;
+                }else{
+                    player.posx = player.posx + 1;
+                }
+                map_refresh(game_map);
+                break;
             //move down
             case 's':
                 player.replace_character_new = game_map[player.posy + 1][player.posx];
@@ -124,6 +109,21 @@ int main(int argc, char *argv[]){
                     player.replace_character = player.replace_character_new;
                 }else{
                     player.posy = player.posy - 1;
+                }
+                map_refresh(game_map);
+                break;
+            //move right
+            case 'd':
+                player.replace_character_new = game_map[player.posy][player.posx + 1];
+                player.old_posx = player.posx;
+                player.old_posy = player.posy;
+                player.posx = player.posx + 1;
+                if(check_for_edge(game_map, player) == false){
+                    game_map[player.old_posy][player.old_posx] = player.replace_character;
+                    game_map[player.posy][player.posx] = player.player_character;
+                    player.replace_character = player.replace_character_new;
+                }else{
+                    player.posx = player.posx - 1;
                 }
                 map_refresh(game_map);
                 break;
@@ -149,68 +149,142 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
     checked_y_neg = false;
     int x = 1;
     int y = 0;
-    //until all positive x and y and negative x and y values from the player have been checked, this loop will run
+    //until all positive x and y and negative x and y values from the player have been checked, this loop will run.
     while(checked_x_pos != true && checked_y_pos != true && checked_x_neg != true && checked_y_neg != true){
+        //checks to see if the player is on a *
+        if(player.replace_character == '*'){
+            checked_x_neg = true;
+            checked_x_pos = true;
+            checked_y_neg = true;
+            checked_y_pos = true;
+        }
         //goes through checks and replaces all values in the + y range with .
         while(checked_y_pos != true){
-            if(game_map[player.posy + y][player.posx] == ' '){
-                game_map[player.posy + y][player.posx] = '.';
-                //goes through checks and replaces all values in + x range with . for the corresponding y value
-                while(checked_x_pos != true){
+            switch(game_map[player.posy + y][player.posx]){
+                case ' ':
+                    game_map[player.posy + y][player.posx] = '.';
+                    //goes through checks and replaces all values
+                    //in + x range with '.' for the corresponding y value
+                    while(checked_x_pos != true){
+                        if(game_map[player.posy + y][player.posx + x] == ' '){
+                            game_map[player.posy + y][player.posx + x] = '.';
+                        }else if(game_map[player.posy + y][player.posx + x] == '*'){
+                            checked_x_pos = true;
+                        }else if(game_map[player.posy + y][player.posx + x] == '#'){
+                            checked_x_pos = true;
+                        }
+                        x = x + 1;
+                    }
+                    checked_x_pos = false;
+                    x = 1;
+                    //goes through checks and replaces all values
+                    //in - x range with '.' for the corresponding y value
+                    while(checked_x_pos != true){
+                        if(game_map[player.posy + y][player.posx - x] == ' '){
+                            game_map[player.posy + y][player.posx - x] = '.';
+                        }else if(game_map[player.posy + y][player.posx - x] == '*'){
+                            checked_x_pos = true;
+                        }else if(game_map[player.posy + y][player.posx - x] == '#'){
+                            checked_x_pos = true;
+                        }
+                        x = x + 1;
+                    }
+                    break;
+
+                case '.':
+                    game_map[player.posy + y][player.posx] = ' ';
+                    //goes through checks and replaces all values
+                    //in + x range with '.' for the corresponding y value
+                    while(checked_x_pos != true){
+                        if(game_map[player.posy + y][player.posx + x] == '.'){
+                            game_map[player.posy + y][player.posx + x] = ' ';
+                        }else if(game_map[player.posy + y][player.posx + x] == '*'){
+                            checked_x_pos = true;
+                        }else if(game_map[player.posy + y][player.posx + x] == '#'){
+                            checked_x_pos = true;
+                        }
+                        x = x + 1;
+                    }
+                    checked_x_pos = false;
+                    x = 1;
+                    //goes through checks and replaces all values
+                    //in - x range with '.' for the corresponding y value
+                    while(checked_x_pos != true){
+                        if(game_map[player.posy + y][player.posx - x] == '.'){
+                            game_map[player.posy + y][player.posx - x] = ' ';
+                        }else if(game_map[player.posy + y][player.posx - x] == '*'){
+                            checked_x_pos = true;
+                        }else if(game_map[player.posy + y][player.posx - x] == '#'){
+                            checked_x_pos = true;
+                        }
+                        x = x + 1;
+                    }
+                    break;
+                case '@':
+                    x = 1;
+                    //goes through checks and replaces all values
+                    //in + x range with '.' for the corresponding y value
                     if(game_map[player.posy + y][player.posx + x] == ' '){
-                        game_map[player.posy + y][player.posx + x] = '.';
-                    }else if(game_map[player.posy + y][player.posx + x] == '*'){
-                        checked_x_pos = true;
-                    }else if(game_map[player.posy + y][player.posx + x] == '#'){
-                        checked_x_pos = true;
+                        while(checked_x_pos != true){
+                            if(game_map[player.posy + y][player.posx + x] == ' '){
+                                game_map[player.posy + y][player.posx + x] = '.';
+                            }else if(game_map[player.posy + y][player.posx + x] == '*'){
+                                checked_x_pos = true;
+                            }else if(game_map[player.posy + y][player.posx + x] == '#'){
+                                checked_x_pos = true;
+                            }
+                            x = x + 1;
+                        }
+                        x = 1;
+                        checked_x_pos = false;
+                        //goes through checks and replaces all values
+                        //in - x range with '.' for the corresponding y value
+                        while(checked_x_pos != true){
+                            if(game_map[player.posy + y][player.posx - x] == ' '){
+                                game_map[player.posy + y][player.posx - x] = '.';
+                            }else if(game_map[player.posy + y][player.posx - x] == '*'){
+                                checked_x_pos = true;
+                            }else if(game_map[player.posy + y][player.posx - x] == '#'){
+                                checked_x_pos = true;
+                            }
+                            x = x + 1;
+                        }
+                    }else if(game_map[player.posy + y][player.posx + x] == '.'){
+                        while(checked_x_pos != true){
+                            if(game_map[player.posy + y][player.posx + x] == '.'){
+                                game_map[player.posy + y][player.posx + x] = ' ';
+                            }else if(game_map[player.posy + y][player.posx + x] == '*'){
+                                checked_x_pos = true;
+                            }else if(game_map[player.posy + y][player.posx + x] == '#'){
+                                checked_x_pos = true;
+                            }
+                            x = x + 1;
+                        }
+                        x = 1;
+                        checked_x_pos = false;
+                        //goes through checks and replaces all values
+                        //in - x range with '.' for the corresponding y value
+                        while(checked_x_pos != true){
+                            if(game_map[player.posy + y][player.posx - x] == '.'){
+                                game_map[player.posy + y][player.posx - x] = ' ';
+                            }else if(game_map[player.posy + y][player.posx - x] == '*'){
+                                checked_x_pos = true;
+                            }else if(game_map[player.posy + y][player.posx - x] == '#'){
+                                checked_x_pos = true;
+                            }
+                            x = x + 1;
+                        }
+
                     }
-                    x = x + 1;
-                }
-                checked_x_pos = false;
-                x = 1;
-                //goes through checks and replaces all values in - x range with . for the corresponding y value
-                while(checked_x_pos != true){
-                    if(game_map[player.posy + y][player.posx - x] == ' '){
-                        game_map[player.posy + y][player.posx - x] = '.';
-                    }else if(game_map[player.posy + y][player.posx - x] == '*'){
-                        checked_x_pos = true;
-                    }else if(game_map[player.posy + y][player.posx - x] == '#'){
-                        checked_x_pos = true;
-                    }
-                    x = x + 1;
-                }
-            }else if(game_map[player.posy + y][player.posx]== '@'){
-                x = 1;
-                //checks the + x values in the player row and replaces with .
-                while(checked_x_pos != true){
-                    if(game_map[player.posy + y][player.posx + x] == ' '){
-                        game_map[player.posy + y][player.posx + x] = '.';
-                    }else if(game_map[player.posy + y][player.posx + x] == '*'){
-                        checked_x_pos = true;
-                    }else if(game_map[player.posy + y][player.posx + x] == '#'){
-                        checked_x_pos = true;
-                    }
-                    x = x + 1;
-                }
-                x = 1;
-                checked_x_pos = false;
-                //checks the - x values in the player row and replaces with .
-                while(checked_x_pos != true){
-                    if(game_map[player.posy + y][player.posx - x] == ' '){
-                        game_map[player.posy + y][player.posx - x] = '.';
-                    }else if(game_map[player.posy + y][player.posx - x] == '*'){
-                        checked_x_pos = true;
-                    }else if(game_map[player.posy + y][player.posx - x] == '#'){
-                        checked_x_pos = true;
-                    }
-                    x = x + 1;
-                }
-            }else if(game_map[player.posy + y][player.posx] == '*'){
-                checked_y_pos = true;
-                checked_x_pos = true;
-            }else if(game_map[player.posy + y][player.posx] == '#'){
-                checked_x_pos = true;
-                checked_y_pos = true;
+                    break;
+                case '*':
+                    checked_y_pos = true;
+                    checked_x_pos = true;
+                    break;
+                case '#':
+                    checked_y_pos = true;
+                    checked_x_pos = true;
+                    break;
             }
             checked_x_pos = false;
             x = 1;
@@ -220,50 +294,70 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
         y = 0;
         //goes thorough checks and replaces all values in the - y range with .
         while(checked_y_neg != true){
-            if(game_map[player.posy - y][player.posx] == ' '){
-                game_map[player.posy - y][player.posx] = '.';
-                //goes through checks and replaces all values in - x range with . for the corresponding y value
-                while(checked_x_neg != true){
-                    if(game_map[player.posy - y][player.posx - x] == ' '){
-                        game_map[player.posy - y][player.posx - x] = '.';
-                    }else if(game_map[player.posy - y][player.posx - x] == '*'){
-                        checked_x_neg = true;
-                    }else if(game_map[player.posy - y][player.posx - x] == '#'){
-                        checked_x_neg = true;
+            switch(game_map[player.posy - y][player.posx]){
+                case ' ':
+                    game_map[player.posy - y][player.posx] = '.';
+                    //goes through checks and replaces all values in - x range with . for the corresponding y value
+                    while(checked_x_neg != true){
+                        if(game_map[player.posy - y][player.posx - x] == ' '){
+                            game_map[player.posy - y][player.posx - x] = '.';
+                        }else if(game_map[player.posy - y][player.posx - x] == '*'){
+                            checked_x_neg = true;
+                        }else if(game_map[player.posy - y][player.posx - x] == '#'){
+                            checked_x_neg = true;
+                        }
+                        x = x + 1;
                     }
-                    x = x + 1;
-                }
-                checked_x_neg = false;
-                x = 1;
-                //goes through checks and replaces all values in + x range with . for the corresponding y value
-                while(checked_x_neg != true){
-                    if(game_map[player.posy - y][player.posx + x] == ' '){
-                        game_map[player.posy - y][player.posx + x] = '.';
-                    }else if(game_map[player.posy - y][player.posx + x] == '*'){
-                        checked_x_neg = true;
-                    }else if(game_map[player.posy - y][player.posx + x] == '#'){
-                        checked_x_neg = true;
+                    checked_x_neg = false;
+                    x = 1;
+                    //goes through checks and replaces all values in + x range with . for the corresponding y value
+                    while(checked_x_neg != true){
+                        if(game_map[player.posy - y][player.posx + x] == ' '){
+                            game_map[player.posy - y][player.posx + x] = '.';
+                        }else if(game_map[player.posy - y][player.posx + x] == '*'){
+                            checked_x_neg = true;
+                        }else if(game_map[player.posy - y][player.posx + x] == '#'){
+                            checked_x_neg = true;
+                        }
+                        x = x + 1;
                     }
-                    x = x + 1;
-                }
-            }else if(game_map[player.posy - y][player.posx]== '@'){
-                //checks the - x values in the player row and replaces with .
-                while(checked_x_neg != true){
-                    if(game_map[player.posy - y][player.posx + x] == ' '){
-                        game_map[player.posy - y][player.posx + x] = '.';
-                    }else if(game_map[player.posy - y][player.posx + x] == '*'){
-                        checked_x_neg = true;
-                    }else if(game_map[player.posy - y][player.posx + x] == '#'){
-                        checked_x_neg = true;
+                    break;
+
+                case '.':
+                    game_map[player.posy - y][player.posx] = '.';
+                    //goes through checks and replaces all values in - x range with . for the corresponding y value
+                    while(checked_x_neg != true){
+                        if(game_map[player.posy - y][player.posx - x] == '.'){
+                            game_map[player.posy - y][player.posx - x] = ' ';
+                        }else if(game_map[player.posy - y][player.posx - x] == '*'){
+                            checked_x_neg = true;
+                        }else if(game_map[player.posy - y][player.posx - x] == '#'){
+                            checked_x_neg = true;
+                        }
+                        x = x + 1;
                     }
-                    x = x + 1;
-                }
-            }else if(game_map[player.posy - y][player.posx] == '*'){
-                checked_y_neg = true;
-                checked_x_neg = true;
-            }else if(game_map[player.posy - y][player.posx] == '#'){
-                checked_x_neg = true;
-                checked_y_neg = true;
+                    checked_x_neg = false;
+                    x = 1;
+                    //goes through checks and replaces all values in + x range with . for the corresponding y value
+                    while(checked_x_neg != true){
+                        if(game_map[player.posy - y][player.posx + x] == '.'){
+                            game_map[player.posy - y][player.posx + x] = ' ';
+                        }else if(game_map[player.posy - y][player.posx + x] == '*'){
+                            checked_x_neg = true;
+                        }else if(game_map[player.posy - y][player.posx + x] == '#'){
+                            checked_x_neg = true;
+                        }
+                        x = x + 1;
+                    }
+                    break;
+                case '*':
+                    checked_y_neg = true;
+                    checked_x_neg = true;
+                    break;
+                case '#':
+                    checked_y_neg = true;
+                    checked_x_neg = true;
+                    break;
             }
             checked_x_neg = false;
             x = 1;
