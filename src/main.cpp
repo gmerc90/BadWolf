@@ -46,9 +46,10 @@ int main(int argc, char *argv[]){
     noecho();
 
     //color initialization
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(1, COLOR_RED, COLOR_RED);
+    init_pair(2, COLOR_YELLOW, COLOR_YELLOW);
     init_pair(3, COLOR_MAGENTA, COLOR_MAGENTA);
+    init_pair(4, COLOR_WHITE, COLOR_WHITE);
 
     //set initial position and initialize the player
     player_struct player;
@@ -160,6 +161,8 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                         game_map[player.posy + y][player.posx + x] = '.';
                     }else if(game_map[player.posy + y][player.posx + x] == '*'){
                         checked_x_pos = true;
+                    }else if(game_map[player.posy + y][player.posx + x] == '#'){
+                        checked_x_pos = true;
                     }
                     x = x + 1;
                 }
@@ -170,6 +173,8 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                     if(game_map[player.posy + y][player.posx - x] == ' '){
                         game_map[player.posy + y][player.posx - x] = '.';
                     }else if(game_map[player.posy + y][player.posx - x] == '*'){
+                        checked_x_pos = true;
+                    }else if(game_map[player.posy + y][player.posx - x] == '#'){
                         checked_x_pos = true;
                     }
                     x = x + 1;
@@ -182,6 +187,8 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                         game_map[player.posy + y][player.posx + x] = '.';
                     }else if(game_map[player.posy + y][player.posx + x] == '*'){
                         checked_x_pos = true;
+                    }else if(game_map[player.posy + y][player.posx + x] == '#'){
+                        checked_x_pos = true;
                     }
                     x = x + 1;
                 }
@@ -193,12 +200,17 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                         game_map[player.posy + y][player.posx - x] = '.';
                     }else if(game_map[player.posy + y][player.posx - x] == '*'){
                         checked_x_pos = true;
+                    }else if(game_map[player.posy + y][player.posx - x] == '#'){
+                        checked_x_pos = true;
                     }
                     x = x + 1;
                 }
             }else if(game_map[player.posy + y][player.posx] == '*'){
                 checked_y_pos = true;
                 checked_x_pos = true;
+            }else if(game_map[player.posy + y][player.posx] == '#'){
+                checked_x_pos = true;
+                checked_y_pos = true;
             }
             checked_x_pos = false;
             x = 1;
@@ -216,6 +228,8 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                         game_map[player.posy - y][player.posx - x] = '.';
                     }else if(game_map[player.posy - y][player.posx - x] == '*'){
                         checked_x_neg = true;
+                    }else if(game_map[player.posy - y][player.posx - x] == '#'){
+                        checked_x_neg = true;
                     }
                     x = x + 1;
                 }
@@ -227,6 +241,8 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                         game_map[player.posy - y][player.posx + x] = '.';
                     }else if(game_map[player.posy - y][player.posx + x] == '*'){
                         checked_x_neg = true;
+                    }else if(game_map[player.posy - y][player.posx + x] == '#'){
+                        checked_x_neg = true;
                     }
                     x = x + 1;
                 }
@@ -237,12 +253,17 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                         game_map[player.posy - y][player.posx + x] = '.';
                     }else if(game_map[player.posy - y][player.posx + x] == '*'){
                         checked_x_neg = true;
+                    }else if(game_map[player.posy - y][player.posx + x] == '#'){
+                        checked_x_neg = true;
                     }
                     x = x + 1;
                 }
             }else if(game_map[player.posy - y][player.posx] == '*'){
                 checked_y_neg = true;
                 checked_x_neg = true;
+            }else if(game_map[player.posy - y][player.posx] == '#'){
+                checked_x_neg = true;
+                checked_y_neg = true;
             }
             checked_x_neg = false;
             x = 1;
@@ -329,6 +350,10 @@ void map_refresh(char game_map[25][81]){
                 attron(COLOR_PAIR(3));
                 mvaddch(y, x, game_map[y][x]);
                 attroff(COLOR_PAIR(3));
+            }else if(game_map[y][x] == '*'){
+                attron(COLOR_PAIR(4));
+                mvaddch(y, x, game_map[y][x]);
+                attroff(COLOR_PAIR(4));
             }else{
                 mvaddch(y, x, game_map[y][x]);
             }
