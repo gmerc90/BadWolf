@@ -27,21 +27,32 @@ class main
             int posx;
             int old_posy;
             int old_posx;
+
             char player_character = '@';
             char replace_character;
             char replace_character_new;
         };
+
+        int tick;
+
         char game_map[25][81];
 
     protected:
 
     private:
+        int ch;
 
         void initial_map_setup(char game_map[25][81], player_struct player);
         void map_refresh(char game_map[25][81]);
         void toggle_hex_status(char game_map[25][81], player_struct player);
+        void create_ant();
+        void age_ant();
+        void check_ant_status();
+        void grow_ant();
+        void kill_ant();
+        void view_ants();
 
-        bool toggle_hex_on(char game_map[25][81], player_struct player);
+        bool check_for_edge(char game_map[25][81], player_struct player);
 
 
 

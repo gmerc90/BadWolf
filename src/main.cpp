@@ -28,13 +28,33 @@ struct player_struct{
     char replace_character_new;
 };
 
+struct ant_struct{
+    int ant_birth_tick[];
+    int ant_age[];
+    int posy[];
+    int posx[];
+    int old_posy[];
+    int old_posx[];
+    char type[];
+};
+
 void initial_map_setup(char game_map[25][81], player_struct player);
 void map_refresh(char game_map[25][81]);
 void toggle_hex_status(char game_map[25][81], player_struct player);
 
+void create_ant();
+void age_ant();
+void check_ant_status();
+void grow_ant();
+void kill_ant();
+void view_ants();
+
 bool check_for_edge(char game_map[25][81], player_struct player);
 
 int main(int argc, char *argv[]){
+
+    //initial basic declarations
+    int tick;
     int ch;
     char game_map[25][81];
 
@@ -139,8 +159,39 @@ int main(int argc, char *argv[]){
     endwin();
     return 0;
 }
+//create new ants and assign their initial values
+void create_ant(){
+    //TODO make create new ants and assign their initial values
+}
+
+//change the age of an ant with each tick of the game
+void age_ant(){
+    //TODO make change the age of an ant with each tick of the game
+}
+
+//check the ant status, whether it is time for it to grow or die.
+void check_ant_status(){
+    //TODO make check the status of an ant and whether or not it is time for it to grow or die
+}
+
+//if needed, have the ant grow
+void grow_ant(){
+    //TODO make have the ant grow if needed
+}
+
+//if needed, kill the ant
+void kill_ant(){
+    //TODO make kill the ant if needed
+}
+
+//view a list of all ants when tab is pressed, alive and dead, and are able to filter the list.
+void view_ants(){
+    //TODO make view a list of all ants, alive and dead, and be filterable.
+}
 
 //change the state of the hex cube to selected or not
+//FIXME for some reason the block directly above the player will not toggle off
+//FIXME when toggled off, sometimes the block where the player was remains toggled on
 void toggle_hex_status(char game_map[25][81], player_struct player){
     bool checked_x_pos, checked_y_pos, checked_x_neg, checked_y_neg;
     checked_x_pos = false;
@@ -161,6 +212,8 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
         //goes through checks and replaces all values in the + y range with .
         while(checked_y_pos != true){
             switch(game_map[player.posy + y][player.posx]){
+
+                //turn untoggled cells on
                 case ' ':
                     game_map[player.posy + y][player.posx] = '.';
                     //goes through checks and replaces all values
@@ -189,8 +242,10 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                         }
                         x = x + 1;
                     }
+                    player.replace_character = '.';
                     break;
 
+                //turn toggled cells off
                 case '.':
                     game_map[player.posy + y][player.posx] = ' ';
                     //goes through checks and replaces all values
@@ -220,6 +275,7 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                         x = x + 1;
                     }
                     break;
+
                 case '@':
                     x = 1;
                     //goes through checks and replaces all values
@@ -277,10 +333,12 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
 
                     }
                     break;
+
                 case '*':
                     checked_y_pos = true;
                     checked_x_pos = true;
                     break;
+
                 case '#':
                     checked_y_pos = true;
                     checked_x_pos = true;
@@ -321,6 +379,7 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                         }
                         x = x + 1;
                     }
+                    player.replace_character = '.';
                     break;
 
                 case '.':
@@ -364,7 +423,7 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
             y = y + 1;
         }
     }
-    player.replace_character = '.';
+    map_refresh(game_map);
 }
 
 //checks to see if player is trying to move out of the map
