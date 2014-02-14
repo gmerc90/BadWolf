@@ -41,6 +41,7 @@ class main
             std::vector<int> posx;
             std::vector<int> old_posy;
             std::vector<int> old_posx;
+            std::vector<char> holding;
             std::vector<char> type;
             std::vector<char> ant_character;
         };

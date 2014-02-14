@@ -38,6 +38,7 @@ struct ant_struct{
     std::vector<int> posx;
     std::vector<int> old_posy;
     std::vector<int> old_posx;
+    std::vector<char> holding;
     std::vector<char> type;
     std::vector<char> ant_character;
 };
@@ -162,7 +163,6 @@ int main(int argc, char *argv[]){
             //select a cell
             case 'e':
                 toggle_hex_status(game_map, player);
-                map_refresh(game_map);
                 break;
             case 'c':
                 create_ant(tick, ant, player, game_map);
@@ -177,7 +177,6 @@ int main(int argc, char *argv[]){
 }
 //create new ants and assign their initial values
 void create_ant(int tick,ant_struct ant, player_struct player, char game_map[25][81]){
-    //TODO make create new ants and assign their initial values
     int vector_size = ant.ant_number.size() + 1;
     ant.ant_number.resize(vector_size);
     ant.ant_number.push_back(vector_size);
