@@ -52,10 +52,7 @@ void age_ant();
 void check_ant_status();
 void grow_ant();
 void kill_ant();
-
 void view_ants(ant_struct ant, int tick);
-WINDOW *create_view_ants_wind(int height, int width, int starty, int startx);
-void destroy_view_ants_wind(WINDOW *view_ants_wind);
 
 void save_game();
 void load_game();
@@ -176,6 +173,7 @@ int main(int argc, char *argv[]){
                 break;
             case KEY_F(2):
                 view_ants(ant, tick);
+                map_refresh(game_map);
                 break;
         }
         //tick the game and then call the age_ant function
@@ -229,35 +227,32 @@ void view_ants(ant_struct ant, int tick){
     //TODO make view a list of all ants, alive and dead, and be filterable.
 
     //declaring ant window variables
-    bool status;
     WINDOW *view_ants_wind;
-    int height, width, starty, startx;
+    int height, width, starty, startx, ch_b, total_ants;
 
     //ant window variable default values
-    height = 5;
-    width = 20;
+    height = 20;
+    width = 60;
     starty = (LINES - height)/2;
     startx = (COLS - width)/2;
+    total_ants = ant.ant_number.size();
 
-    view_ants_wind = create_view_ants_wind(height, width, starty, startx);
+    //creates the view ants window
+    view_ants_wind = newwin(height, width, starty, startx);
+    box(view_ants_wind, 0, 0);
+    scrollok(view_ants_wind, TRUE);
+    wrefresh(view_ants_wind);
 
-}
-
-//creates the actual window to view the ants
-WINDOW *create_view_ants_wind(int height, int width, int starty, int startx){
-    WINDOW *local_win;
-
-    local_win = newwin(height, width, starty, startx);
-    box(local_win, 0, 0);
-
-    wrefresh(local_win);
-
-    return local_win;
-}
-
-//destroys the window where the ants are viewed
-void destroy_view_ants_wind(WINDOW *view_ants_wind){
-
+    while((ch_b = getch()) != 'q'){
+        mvwaddch(view_ants_wind, 1, 1, total_ants);
+        int y = 4;
+        for(int i = 1; i <= total_ants; i++){
+            mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Ant Birth Tick: %d", ant.ant_number.at(i), ant.ant_birth_tick.at(i));
+            y = y + 1;
+        }
+        mvwprintw(view_ants_wind, 15, 2, "derp");
+        wrefresh(view_ants_wind);
+    }
 }
 
 //saves all the data from the game to a text file
