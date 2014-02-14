@@ -4,3 +4,4 @@ BadWolf.layout
 bin/Debug/BadWolf.exe
 bin/Debug/curses2.dll
 obj/Debug/src/main.o
+bin/Debug/BadWolf

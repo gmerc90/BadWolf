@@ -33,9 +33,24 @@ class main
             char replace_character_new;
         };
 
+        struct ant_struct{
+            std::vector<int> ant_number;
+            std::vector<int> ant_birth_tick;
+            std::vector<int> ant_age;
+            std::vector<int> posy;
+            std::vector<int> posx;
+            std::vector<int> old_posy;
+            std::vector<int> old_posx;
+            std::vector<char> type;
+            std::vector<char> ant_character;
+        };
+
         int tick;
 
         char game_map[25][81];
+
+        void save();
+        void load();
 
     protected:
 
@@ -45,7 +60,7 @@ class main
         void initial_map_setup(char game_map[25][81], player_struct player);
         void map_refresh(char game_map[25][81]);
         void toggle_hex_status(char game_map[25][81], player_struct player);
-        void create_ant();
+        void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
         void age_ant();
         void check_ant_status();
         void grow_ant();

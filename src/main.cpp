@@ -15,6 +15,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <ncurses.h>
+#include <vector>
 #include "main.h"
 #include "map.h"
 
@@ -28,29 +29,36 @@ struct player_struct{
     char replace_character_new;
 };
 
+
 struct ant_struct{
-    int ant_birth_tick[];
-    int ant_age[];
-    int posy[];
-    int posx[];
-    int old_posy[];
-    int old_posx[];
-    char type[];
+    std::vector<int> ant_number;
+    std::vector<int> ant_birth_tick;
+    std::vector<int> ant_age;
+    std::vector<int> posy;
+    std::vector<int> posx;
+    std::vector<int> old_posy;
+    std::vector<int> old_posx;
+    std::vector<char> type;
+    std::vector<char> ant_character;
 };
 
 void initial_map_setup(char game_map[25][81], player_struct player);
 void map_refresh(char game_map[25][81]);
 void toggle_hex_status(char game_map[25][81], player_struct player);
 
-void create_ant();
+void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
 void age_ant();
 void check_ant_status();
 void grow_ant();
 void kill_ant();
 void view_ants();
 
+void save();
+void load();
+
 bool check_for_edge(char game_map[25][81], player_struct player);
 
+//FIXME appears to be a random ^ that is directly above where the player starts
 int main(int argc, char *argv[]){
 
     //initial basic declarations
@@ -70,11 +78,15 @@ int main(int argc, char *argv[]){
     init_pair(2, COLOR_YELLOW, COLOR_YELLOW);
     init_pair(3, COLOR_MAGENTA, COLOR_MAGENTA);
     init_pair(4, COLOR_WHITE, COLOR_WHITE);
+    init_pair(5, COLOR_BLUE, COLOR_BLUE);
 
     //set initial position and initialize the player
     player_struct player;
     player.posy = LINES/2;
     player.posx = COLS/2;
+
+    //creates the initial ant structure
+    ant_struct ant;
 
     //show initial map
     initial_map_setup(game_map, player);
@@ -152,7 +164,11 @@ int main(int argc, char *argv[]){
                 toggle_hex_status(game_map, player);
                 map_refresh(game_map);
                 break;
+            case 'c':
+                create_ant(tick, ant, player, game_map);
+                break;
         }
+        tick = tick + 1;
     }
 
     //terminate program
@@ -160,8 +176,21 @@ int main(int argc, char *argv[]){
     return 0;
 }
 //create new ants and assign their initial values
-void create_ant(){
+void create_ant(int tick,ant_struct ant, player_struct player, char game_map[25][81]){
     //TODO make create new ants and assign their initial values
+    int vector_size = ant.ant_number.size() + 1;
+    ant.ant_number.resize(vector_size);
+    ant.ant_number.push_back(vector_size);
+    ant.ant_age.resize(vector_size);
+    ant.ant_age.push_back(tick);
+    ant.ant_character.resize(vector_size);
+    ant.ant_character.push_back('t');
+    ant.posx.resize(vector_size);
+    ant.posx.push_back(player.posx);
+    ant.posy.resize(vector_size);
+    ant.posy.push_back(player.posy + vector_size);
+    game_map[ant.posy.at(vector_size)][ant.posx.at(vector_size)] = ant.ant_character.at(vector_size);
+    map_refresh(game_map);
 }
 
 //change the age of an ant with each tick of the game
@@ -189,9 +218,20 @@ void view_ants(){
     //TODO make view a list of all ants, alive and dead, and be filterable.
 }
 
+//saves all the data from the game to a text file
+void save(){
+//TODO have function save all program data to a text file
+}
+
+//loads all data from a text file and puts it into the game
+void load(){
+//TODO have function load all data from a text file if told to
+}
+
 //change the state of the hex cube to selected or not
 //FIXME for some reason the block directly above the player will not toggle off
 //FIXME when toggled off, sometimes the block where the player was remains toggled on
+//FIXME the block directly above the player that remains toggled on prevents the cell from correctly toggling on again
 void toggle_hex_status(char game_map[25][81], player_struct player){
     bool checked_x_pos, checked_y_pos, checked_x_neg, checked_y_neg;
     checked_x_pos = false;
@@ -507,6 +547,10 @@ void map_refresh(char game_map[25][81]){
                 attron(COLOR_PAIR(4));
                 mvaddch(y, x, game_map[y][x]);
                 attroff(COLOR_PAIR(4));
+            }else if(game_map[y][x] == 't'){
+                attron(COLOR_PAIR(5));
+                mvaddch(y, x, game_map[y][x]);
+                attroff(COLOR_PAIR(5));
             }else{
                 mvaddch(y, x, game_map[y][x]);
             }
