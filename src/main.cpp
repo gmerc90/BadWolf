@@ -171,8 +171,13 @@ int main(int argc, char *argv[]){
             case 'c':
                 create_ant(tick, ant, player, game_map);
                 break;
+            case KEY_F(2):
+                view_ants(ant);
+                break;
         }
+        //tick the game and then call the age_ant function
         tick = tick + 1;
+        age_ant();
     }
 
     //terminate program
