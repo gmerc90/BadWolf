@@ -74,6 +74,9 @@ int main(int argc, char *argv[]){
     keypad(stdscr, TRUE);
     noecho();
 
+    //set window size
+    resizeterm(25,80);
+
     //color initialization
     init_pair(1, COLOR_RED, COLOR_RED);
     init_pair(2, COLOR_YELLOW, COLOR_YELLOW);
@@ -85,6 +88,7 @@ int main(int argc, char *argv[]){
     player_struct player;
     player.posy = LINES/2;
     player.posx = COLS/2;
+    player.replace_character = ' ';
 
     //creates the initial ant structure
     ant_struct ant;
