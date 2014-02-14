@@ -66,7 +66,13 @@ class main
         void check_ant_status();
         void grow_ant();
         void kill_ant();
-        void view_ants();
+
+        void view_ants(ant_struct ant, int tick);
+        void destroy_view_ants_wind(WINDOW *view_ants_wind);
+        WINDOW *create_view_ants_wind(int height, int width, int starty, int startx);
+
+        void save_game();
+        void load_game();
 
         bool check_for_edge(char game_map[25][81], player_struct player);
 

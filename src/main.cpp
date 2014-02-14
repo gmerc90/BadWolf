@@ -52,10 +52,13 @@ void age_ant();
 void check_ant_status();
 void grow_ant();
 void kill_ant();
-void view_ants();
 
-void save();
-void load();
+void view_ants(ant_struct ant, int tick);
+WINDOW *create_view_ants_wind(int height, int width, int starty, int startx);
+void destroy_view_ants_wind(WINDOW *view_ants_wind);
+
+void save_game();
+void load_game();
 
 bool check_for_edge(char game_map[25][81], player_struct player);
 
@@ -172,7 +175,7 @@ int main(int argc, char *argv[]){
                 create_ant(tick, ant, player, game_map);
                 break;
             case KEY_F(2):
-                view_ants(ant);
+                view_ants(ant, tick);
                 break;
         }
         //tick the game and then call the age_ant function
@@ -222,17 +225,48 @@ void kill_ant(){
 }
 
 //view a list of all ants when tab is pressed, alive and dead, and are able to filter the list.
-void view_ants(){
+void view_ants(ant_struct ant, int tick){
     //TODO make view a list of all ants, alive and dead, and be filterable.
+
+    //declaring ant window variables
+    bool status;
+    WINDOW *view_ants_wind;
+    int height, width, starty, startx;
+
+    //ant window variable default values
+    height = 5;
+    width = 20;
+    starty = (LINES - height)/2;
+    startx = (COLS - width)/2;
+
+    view_ants_wind = create_view_ants_wind(height, width, starty, startx);
+
+}
+
+//creates the actual window to view the ants
+WINDOW *create_view_ants_wind(int height, int width, int starty, int startx){
+    WINDOW *local_win;
+
+    local_win = newwin(height, width, starty, startx);
+    box(local_win, 0, 0);
+
+    wrefresh(local_win);
+
+    return local_win;
+}
+
+//destroys the window where the ants are viewed
+void destroy_view_ants_wind(WINDOW *view_ants_wind){
+
 }
 
 //saves all the data from the game to a text file
-void save(){
+void save_game(){
 //TODO have function save all program data to a text file
 }
 
 //loads all data from a text file and puts it into the game
-void load(){
+void load_game(){
 //TODO have function load all data from a text file if told to
 }
 
