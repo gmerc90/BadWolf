@@ -52,6 +52,7 @@ class main
 
         void save();
         void load();
+        void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
 
     protected:
 
@@ -61,7 +62,6 @@ class main
         void initial_map_setup(char game_map[25][81], player_struct player);
         void map_refresh(char game_map[25][81]);
         void toggle_hex_status(char game_map[25][81], player_struct player);
-        void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
         void age_ant();
         void check_ant_status();
         void grow_ant();

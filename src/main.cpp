@@ -63,8 +63,7 @@ bool check_for_edge(char game_map[25][81], player_struct player);
 int main(int argc, char *argv[]){
 
     //initial basic declarations
-    int tick;
-    int ch;
+    int ch, tick, vector_size;
     char game_map[25][81];
 
     //standard starting stuff for Curses
@@ -96,6 +95,9 @@ int main(int argc, char *argv[]){
     //show initial map
     initial_map_setup(game_map, player);
     map_refresh(game_map);
+
+    //set initial tick value
+    tick = 0;
 
     //main game loop
     while((ch = getch()) != KEY_F(1)){
@@ -168,8 +170,23 @@ int main(int argc, char *argv[]){
             case 'e':
                 toggle_hex_status(game_map, player);
                 break;
+            //create ants with their initial value
+            //FIX ME for some reason, even value ants aren't getting their proper values.
             case 'c':
-                create_ant(tick, ant, player, game_map);
+                vector_size = ant.ant_number.size() + 1;
+                ant.ant_number.resize(vector_size);
+                ant.ant_number.push_back(vector_size);
+                ant.ant_birth_tick.resize(vector_size);
+                ant.ant_birth_tick.push_back(tick);
+                ant.ant_character.resize(vector_size);
+                ant.ant_character.push_back('t');
+                ant.posx.resize(vector_size);
+                ant.posx.push_back(player.posx);
+                ant.posy.resize(vector_size);
+                ant.posy.push_back(player.posy + 1);
+                game_map[ant.posy.at(vector_size)][ant.posx.at(vector_size)] = ant.ant_character.at(vector_size);
+                mvprintw(24, 3, "%d", ant.ant_number.size());
+                map_refresh(game_map);
                 break;
             case KEY_F(2):
                 view_ants(ant, tick);
@@ -184,22 +201,6 @@ int main(int argc, char *argv[]){
     //terminate program
     endwin();
     return 0;
-}
-//create new ants and assign their initial values
-void create_ant(int tick,ant_struct ant, player_struct player, char game_map[25][81]){
-    int vector_size = ant.ant_number.size() + 1;
-    ant.ant_number.resize(vector_size);
-    ant.ant_number.push_back(vector_size);
-    ant.ant_age.resize(vector_size);
-    ant.ant_age.push_back(tick);
-    ant.ant_character.resize(vector_size);
-    ant.ant_character.push_back('t');
-    ant.posx.resize(vector_size);
-    ant.posx.push_back(player.posx);
-    ant.posy.resize(vector_size);
-    ant.posy.push_back(player.posy + vector_size);
-    game_map[ant.posy.at(vector_size)][ant.posx.at(vector_size)] = ant.ant_character.at(vector_size);
-    map_refresh(game_map);
 }
 
 //change the age of an ant with each tick of the game
@@ -224,8 +225,7 @@ void kill_ant(){
 
 //view a list of all ants when tab is pressed, alive and dead, and are able to filter the list.
 void view_ants(ant_struct ant, int tick){
-    //TODO make view a list of all ants, alive and dead, and be filterable.
-
+    //TODO make this list scrollable, even thoughn it already should be.
     //declaring ant window variables
     WINDOW *view_ants_wind;
     int height, width, starty, startx, ch_b, total_ants;
@@ -235,23 +235,24 @@ void view_ants(ant_struct ant, int tick){
     width = 60;
     starty = (LINES - height)/2;
     startx = (COLS - width)/2;
-    total_ants = ant.ant_number.size();
+    total_ants = ant.ant_number.size()/2;
 
     //creates the view ants window
     view_ants_wind = newwin(height, width, starty, startx);
     box(view_ants_wind, 0, 0);
     scrollok(view_ants_wind, TRUE);
+    mvwprintw(view_ants_wind, 1, 1,"There are %d ants", total_ants);
+    wrefresh(view_ants_wind);
+
+    int y = 4;
+    for(int i = 1; i <= 5; i++){
+        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Ant Birth Tick: %d | POS(x,y): %d, %d", ant.ant_number.at(i), ant.ant_birth_tick.at(i), ant.posx.at(i), ant.posy.at(i));
+        y = y + 1;
+    }
     wrefresh(view_ants_wind);
 
     while((ch_b = getch()) != 'q'){
-        mvwaddch(view_ants_wind, 1, 1, total_ants);
-        int y = 4;
-        for(int i = 1; i <= total_ants; i++){
-            mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Ant Birth Tick: %d", ant.ant_number.at(i), ant.ant_birth_tick.at(i));
-            y = y + 1;
-        }
-        mvwprintw(view_ants_wind, 15, 2, "derp");
-        wrefresh(view_ants_wind);
+
     }
 }
 
