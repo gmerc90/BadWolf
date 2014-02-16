@@ -48,7 +48,7 @@ void map_refresh(char game_map[25][81]);
 void toggle_hex_status(char game_map[25][81], player_struct player);
 
 void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
-void age_ant();
+void age_ant(ant_struct ant, int tick);
 void check_ant_status();
 void grow_ant();
 void kill_ant();
@@ -59,12 +59,12 @@ void load_game();
 
 bool check_for_edge(char game_map[25][81], player_struct player);
 
-//FIXME appears to be a random ^ that is directly above where the player starts
 int main(int argc, char *argv[]){
 
     //initial basic declarations
     int ch, tick, vector_size;
     char game_map[25][81];
+    bool first_ant;
 
     //standard starting stuff for Curses
     initscr();
@@ -89,8 +89,11 @@ int main(int argc, char *argv[]){
     player.posx = COLS/2;
     player.replace_character = ' ';
 
-    //creates the initial ant structure
+    //creates the initial ant structure and sets an ant number to one
     ant_struct ant;
+    ant.ant_number.resize(1);
+    ant.ant_number.push_back(1);
+    first_ant = true;
 
     //show initial map
     initial_map_setup(game_map, player);
@@ -171,11 +174,15 @@ int main(int argc, char *argv[]){
                 toggle_hex_status(game_map, player);
                 break;
             //create ants with their initial value
-            //FIX ME for some reason, even value ants aren't getting their proper values.
             case 'c':
-                vector_size = ant.ant_number.size() + 1;
-                ant.ant_number.resize(vector_size);
-                ant.ant_number.push_back(vector_size);
+                if(first_ant == true){
+                    vector_size = ant.ant_number.back();
+                    first_ant = false;
+                }else if(first_ant == false){
+                    vector_size = ant.ant_number.back() + 1;
+                    ant.ant_number.resize(vector_size);
+                    ant.ant_number.push_back(vector_size);
+                }
                 ant.ant_birth_tick.resize(vector_size);
                 ant.ant_birth_tick.push_back(tick);
                 ant.ant_character.resize(vector_size);
@@ -194,8 +201,9 @@ int main(int argc, char *argv[]){
                 break;
         }
         //tick the game and then call the age_ant function
+        //FIX ME the ticks are only going after a button has been pressed, this needs to happen indepently
         tick = tick + 1;
-        age_ant();
+        //age_ant(ant, tick);
     }
 
     //terminate program
@@ -204,8 +212,15 @@ int main(int argc, char *argv[]){
 }
 
 //change the age of an ant with each tick of the game
-void age_ant(){
+void age_ant(ant_struct ant, int tick){
     //TODO make change the age of an ant with each tick of the game
+    int total_ants = ant.ant_number.size()/2;
+    if(total_ants < 1){
+        total_ants = 1;
+    }
+    for(int i = 1; i <= 1; i++){
+        ant.ant_age.at(i) = tick - ant.ant_birth_tick.at(i);
+    }
 }
 
 //check the ant status, whether it is time for it to grow or die.
@@ -235,7 +250,7 @@ void view_ants(ant_struct ant, int tick){
     width = 60;
     starty = (LINES - height)/2;
     startx = (COLS - width)/2;
-    total_ants = ant.ant_number.size()/2;
+    total_ants = ant.ant_number.back();
 
     //creates the view ants window
     view_ants_wind = newwin(height, width, starty, startx);
@@ -245,8 +260,8 @@ void view_ants(ant_struct ant, int tick){
     wrefresh(view_ants_wind);
 
     int y = 4;
-    for(int i = 1; i <= 5; i++){
-        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Ant Birth Tick: %d | POS(x,y): %d, %d", ant.ant_number.at(i), ant.ant_birth_tick.at(i), ant.posx.at(i), ant.posy.at(i));
+    for(int i = 1; i <= total_ants; i++){
+        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Birth Tick: %d | Age: %d", ant.ant_number.at(i), ant.ant_birth_tick.at(i), (tick - ant.ant_birth_tick.at(i)));
         y = y + 1;
     }
     wrefresh(view_ants_wind);
@@ -254,6 +269,7 @@ void view_ants(ant_struct ant, int tick){
     while((ch_b = getch()) != 'q'){
 
     }
+    delwin(view_ants_wind);
 }
 
 //saves all the data from the game to a text file
