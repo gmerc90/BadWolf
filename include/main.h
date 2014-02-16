@@ -56,13 +56,11 @@ class main
     protected:
 
     private:
-        int ch;
+        int ch, total_ants;
 
         void initial_map_setup(char game_map[25][81], player_struct player);
         void map_refresh(char game_map[25][81]);
         void toggle_hex_status(char game_map[25][81], player_struct player);
-        void age_ant(ant_struct ant, int tick);
-        void check_ant_status();
         void grow_ant();
         void kill_ant();
         void view_ants(ant_struct ant, int tick);

@@ -48,8 +48,6 @@ void map_refresh(char game_map[25][81]);
 void toggle_hex_status(char game_map[25][81], player_struct player);
 
 void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
-void age_ant(ant_struct ant, int tick);
-void check_ant_status();
 void grow_ant();
 void kill_ant();
 void view_ants(ant_struct ant, int tick);
@@ -62,7 +60,7 @@ bool check_for_edge(char game_map[25][81], player_struct player);
 int main(int argc, char *argv[]){
 
     //initial basic declarations
-    int ch, tick, vector_size;
+    int ch, tick, vector_size, total_ants;
     char game_map[25][81];
     bool first_ant;
 
@@ -183,6 +181,8 @@ int main(int argc, char *argv[]){
                     ant.ant_number.resize(vector_size);
                     ant.ant_number.push_back(vector_size);
                 }
+                ant.ant_age.resize(vector_size);
+                ant.ant_age.push_back(0);
                 ant.ant_birth_tick.resize(vector_size);
                 ant.ant_birth_tick.push_back(tick);
                 ant.ant_character.resize(vector_size);
@@ -203,29 +203,19 @@ int main(int argc, char *argv[]){
         //tick the game and then call the age_ant function
         //FIX ME the ticks are only going after a button has been pressed, this needs to happen indepently
         tick = tick + 1;
-        //age_ant(ant, tick);
-    }
 
+        //after each tick updates the age of the ant
+        if(first_ant == false){
+            total_ants = ant.ant_number.back();
+            for(int i = 1; i <= total_ants; i++){
+                ant.ant_age.at(i) = tick - ant.ant_birth_tick.at(i);
+            }
+        }
+
+    }
     //terminate program
     endwin();
     return 0;
-}
-
-//change the age of an ant with each tick of the game
-void age_ant(ant_struct ant, int tick){
-    //TODO make change the age of an ant with each tick of the game
-    int total_ants = ant.ant_number.size()/2;
-    if(total_ants < 1){
-        total_ants = 1;
-    }
-    for(int i = 1; i <= 1; i++){
-        ant.ant_age.at(i) = tick - ant.ant_birth_tick.at(i);
-    }
-}
-
-//check the ant status, whether it is time for it to grow or die.
-void check_ant_status(){
-    //TODO make check the status of an ant and whether or not it is time for it to grow or die
 }
 
 //if needed, have the ant grow
@@ -261,7 +251,8 @@ void view_ants(ant_struct ant, int tick){
 
     int y = 4;
     for(int i = 1; i <= total_ants; i++){
-        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Birth Tick: %d | Age: %d", ant.ant_number.at(i), ant.ant_birth_tick.at(i), (tick - ant.ant_birth_tick.at(i)));
+        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Birth Tick: %d | Age: %d | POS: %d, %d", ant.ant_number.at(i), ant.ant_birth_tick.at(i),
+                  ant.ant_age.at(i), ant.posx.at(i), ant.posy.at(i));
         y = y + 1;
     }
     wrefresh(view_ants_wind);
