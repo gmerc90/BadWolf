@@ -249,16 +249,24 @@ void view_ants(ant_struct ant, int tick){
     mvwprintw(view_ants_wind, 1, 1,"There are %d ants", total_ants);
     wrefresh(view_ants_wind);
 
-    int y = 4;
+    int y = 3;
     for(int i = 1; i <= total_ants; i++){
-        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Age: %d | POS: %d, %d", ant.ant_number.at(i),
-                  ant.ant_age.at(i), ant.posx.at(i), ant.posy.at(i));
+        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Age: %d | POS: %d, %d", ant.ant_number.at(i), ant.ant_age.at(i), ant.posx.at(i), ant.posy.at(i));
         y = y + 1;
     }
     wrefresh(view_ants_wind);
 
     while((ch_b = getch()) != 'q'){
-
+        switch(ch_b){
+            case KEY_UP:
+                wscrl(view_ants_wind, 1);
+                wrefresh(view_ants_wind);
+                break;
+            case KEY_DOWN:
+                wscrl(view_ants_wind, -1);
+                wrefresh(view_ants_wind);
+                break;
+        }
     }
     delwin(view_ants_wind);
 }
@@ -286,7 +294,8 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
     int x = 1;
     int y = 0;
     //until all positive x and y and negative x and y values from the player have been checked, this loop will run.
-    while(checked_x_pos != true && checked_y_pos != true && checked_x_neg != true && checked_y_neg != true){
+    while(checked_x_pos != true && checked_y_pos != true && checked_x_neg
+          != true && checked_y_neg != true){
         //checks to see if the player is on a *
         if(player.replace_character == '*'){
             checked_x_neg = true;
@@ -440,7 +449,8 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
             switch(game_map[player.posy - y][player.posx]){
                 case ' ':
                     game_map[player.posy - y][player.posx] = '.';
-                    //goes through checks and replaces all values in - x range with . for the corresponding y value
+                    //goes through checks and replaces all values in - x range with
+                    //. for the corresponding y value
                     while(checked_x_neg != true){
                         if(game_map[player.posy - y][player.posx - x] == ' '){
                             game_map[player.posy - y][player.posx - x] = '.';
@@ -453,7 +463,8 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                     }
                     checked_x_neg = false;
                     x = 1;
-                    //goes through checks and replaces all values in + x range with . for the corresponding y value
+                    //goes through checks and replaces all values in + x range with
+                    //. for the corresponding y value
                     while(checked_x_neg != true){
                         if(game_map[player.posy - y][player.posx + x] == ' '){
                             game_map[player.posy - y][player.posx + x] = '.';
@@ -469,7 +480,8 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
 
                 case '.':
                     game_map[player.posy - y][player.posx] = '.';
-                    //goes through checks and replaces all values in - x range with . for the corresponding y value
+                    //goes through checks and replaces all values in - x range with
+                    //. for the corresponding y value
                     while(checked_x_neg != true){
                         if(game_map[player.posy - y][player.posx - x] == '.'){
                             game_map[player.posy - y][player.posx - x] = ' ';
@@ -482,7 +494,8 @@ void toggle_hex_status(char game_map[25][81], player_struct player){
                     }
                     checked_x_neg = false;
                     x = 1;
-                    //goes through checks and replaces all values in + x range with . for the corresponding y value
+                    //goes through checks and replaces all values in + x range with
+                    //. for the corresponding y value
                     while(checked_x_neg != true){
                         if(game_map[player.posy - y][player.posx + x] == '.'){
                             game_map[player.posy - y][player.posx + x] = ' ';
