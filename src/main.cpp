@@ -50,7 +50,7 @@ void toggle_hex_status(char game_map[25][81], player_struct player);
 void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
 void grow_ant();
 void kill_ant();
-void view_ants(ant_struct ant, int tick);
+void view_ants(ant_struct ant, int tick, bool first_ant);
 
 void save_game();
 void load_game();
@@ -190,13 +190,17 @@ int main(int argc, char *argv[]){
                 ant.posx.resize(vector_size);
                 ant.posx.push_back(player.posx);
                 ant.posy.resize(vector_size);
-                ant.posy.push_back(player.posy + 1);
+                if(game_map[player.posy + 1][player.posx] != '*'){
+                    ant.posy.push_back(player.posy + 1);
+                }else{
+                    ant.posy.push_back(player.posy + 2);
+                }
                 game_map[ant.posy.at(vector_size)][ant.posx.at(vector_size)] = ant.ant_character.at(vector_size);
                 mvprintw(24, 3, "%d", ant.ant_number.size());
                 map_refresh(game_map);
                 break;
             case KEY_F(2):
-                view_ants(ant, tick);
+                view_ants(ant, tick, first_ant);
                 map_refresh(game_map);
                 break;
         }
@@ -229,11 +233,10 @@ void kill_ant(){
 }
 
 //view a list of all ants when tab is pressed, alive and dead, and are able to filter the list.
-void view_ants(ant_struct ant, int tick){
-    //TODO make this list scrollable, even thoughn it already should be.
-    //declaring ant window variables
+void view_ants(ant_struct ant, int tick, bool first_ant){
+    //declaring function variables
     WINDOW *view_ants_wind;
-    int height, width, starty, startx, ch_b, total_ants;
+    int height, width, starty, startx, ch_b, total_ants, last_ant_shown, first_ant_shown;
 
     //ant window variable default values
     height = 20;
@@ -246,26 +249,58 @@ void view_ants(ant_struct ant, int tick){
     view_ants_wind = newwin(height, width, starty, startx);
     box(view_ants_wind, 0, 0);
     scrollok(view_ants_wind, TRUE);
-    mvwprintw(view_ants_wind, 1, 1,"There are %d ants", total_ants);
     wrefresh(view_ants_wind);
 
-    int y = 3;
-    for(int i = 1; i <= total_ants; i++){
-        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Age: %d | POS: %d, %d", ant.ant_number.at(i), ant.ant_age.at(i), ant.posx.at(i), ant.posy.at(i));
-        y = y + 1;
-    }
-    wrefresh(view_ants_wind);
+    //checks to see if the first ant has been created, if it has been they will be printed out.
+    if(first_ant == true){
+        mvwprintw(view_ants_wind, 1, 1, "There are not any ants yet.");
+        wrefresh(view_ants_wind);
+        while((ch_b = getch()) != 'q'){
 
-    while((ch_b = getch()) != 'q'){
-        switch(ch_b){
-            case KEY_UP:
-                wscrl(view_ants_wind, 1);
-                wrefresh(view_ants_wind);
+        }
+    }else if( first_ant == false){
+        int y = 1;
+        for(int i = 1; i <= total_ants; i++){
+            if(y > 18){
                 break;
-            case KEY_DOWN:
-                wscrl(view_ants_wind, -1);
-                wrefresh(view_ants_wind);
-                break;
+            }
+            mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Age: %d | POS: %d, %d", ant.ant_number.at(i), ant.ant_age.at(i), ant.posx.at(i), ant.posy.at(i));
+            y = y + 1;
+            last_ant_shown = i;
+        }
+        wrefresh(view_ants_wind);
+        first_ant_shown = 1;
+
+        //scroll the window up and down when the appropriate key is pressed and print out the necessary lines.
+        while((ch_b = getch()) != 'q'){
+            switch(ch_b){
+                case KEY_DOWN:
+                    if(last_ant_shown + 1 <= ant.ant_number.back()){
+                        last_ant_shown = last_ant_shown + 1;
+                        first_ant_shown = first_ant_shown + 1;
+                        wborder(view_ants_wind, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+                        wrefresh(view_ants_wind);
+                        wscrl(view_ants_wind, 1);
+                        box(view_ants_wind, 0, 0);
+                        mvwprintw(view_ants_wind, 18, 1, "Ant Number: %d | Age: %d | POS: %d, %d", ant.ant_number.at(last_ant_shown),
+                                  ant.ant_age.at(last_ant_shown), ant.posx.at(last_ant_shown), ant.posy.at(last_ant_shown));
+                        wrefresh(view_ants_wind);
+                    }
+                    break;
+                case KEY_UP:
+                    if(first_ant_shown - 1 >= 1){
+                        last_ant_shown = last_ant_shown - 1;
+                        first_ant_shown = first_ant_shown -1;
+                        wborder(view_ants_wind, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+                        wrefresh(view_ants_wind);
+                        wscrl(view_ants_wind, -1);
+                        box(view_ants_wind, 0, 0);
+                        mvwprintw(view_ants_wind, 1, 1, "Ant Number: %d | Age: %d | POS: %d, %d", ant.ant_number.at(first_ant_shown),
+                                  ant.ant_age.at(first_ant_shown), ant.posx.at(first_ant_shown), ant.posy.at(first_ant_shown));
+                        wrefresh(view_ants_wind);
+                    }
+                    break;
+            }
         }
     }
     delwin(view_ants_wind);
