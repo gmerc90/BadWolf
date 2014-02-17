@@ -200,7 +200,7 @@ int main(int argc, char *argv[]){
                 map_refresh(game_map);
                 break;
         }
-        //tick the game and then call the age_ant function
+        //tick the game
         //FIX ME the ticks are only going after a button has been pressed, this needs to happen indepently
         tick = tick + 1;
 
@@ -251,7 +251,7 @@ void view_ants(ant_struct ant, int tick){
 
     int y = 4;
     for(int i = 1; i <= total_ants; i++){
-        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Birth Tick: %d | Age: %d | POS: %d, %d", ant.ant_number.at(i), ant.ant_birth_tick.at(i),
+        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Age: %d | POS: %d, %d", ant.ant_number.at(i),
                   ant.ant_age.at(i), ant.posx.at(i), ant.posy.at(i));
         y = y + 1;
     }
