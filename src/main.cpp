@@ -47,15 +47,15 @@ struct ant_struct{
 void initial_map_setup(char game_map[25][81], player_struct player);
 void map_refresh(char game_map[25][81]);
 void toggle_hex_status(char game_map[25][81], player_struct player);
-
 void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
 void kill_ant();
 void view_ants(ant_struct ant, int tick, bool first_ant);
-
 void save_game();
 void load_game();
 
 bool check_for_edge(char game_map[25][81], player_struct player);
+
+char view_menu();
 
 int main(int argc, char *argv[]){
 
@@ -70,6 +70,7 @@ int main(int argc, char *argv[]){
     cbreak();
     keypad(stdscr, TRUE);
     noecho();
+    curs_set(0);
 
     //set window size
     resizeterm(25,80);
@@ -81,6 +82,7 @@ int main(int argc, char *argv[]){
     init_pair(4, COLOR_WHITE, COLOR_WHITE);
     init_pair(5, COLOR_BLUE, COLOR_BLUE);
     init_pair(6, COLOR_CYAN, COLOR_CYAN);
+    init_pair(7, COLOR_BLUE, COLOR_WHITE);
 
     //set initial position and initialize the player
     player_struct player;
@@ -204,8 +206,14 @@ int main(int argc, char *argv[]){
                 mvprintw(24, 3, "%d", ant.number.size());
                 map_refresh(game_map);
                 break;
+            //view ants window
             case KEY_F(2):
                 view_ants(ant, tick, first_ant);
+                map_refresh(game_map);
+                break;
+            //bring up game menu
+            case KEY_F(3):
+                view_menu();
                 map_refresh(game_map);
                 break;
         }
@@ -223,7 +231,6 @@ int main(int argc, char *argv[]){
                     case 50:
                         ant.type.at(i) = "Larva";
                         ant.character.at(i) = 'l';
-
                         break;
                     case 100:
                         ant.type.at(i) = "Pupa";
@@ -246,6 +253,58 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
+//create a menu where you will be able to choose quit, save, and load options
+char view_menu(){
+    //declaring initial function values
+    WINDOW *view_menu_wind;
+    int height, width, wind_y, wind_x, ch_b, highlighted_row;
+    int y = 1;
+    int x = 3;
+    std::string menu_options[] = {"Save", "Load", "Quit", "Close"};
+    char selected;
+
+    //menu window variable default values
+    height = 6;
+    width = 10;
+    wind_y = (LINES - height) / 2;
+    wind_x = (COLS - width) / 2;
+
+    //create the window
+    view_menu_wind = newwin(height, width, wind_y, wind_x);
+    box(view_menu_wind, 0, 0);
+
+    //print the menu options
+    for(int i = 0; i < 4; i++){
+        if(i == 0){
+            attron(COLOR_PAIR(7));
+            mvwaddstr(view_menu_wind, y, x, menu_options[i].c_str());
+            attroff(COLOR_PAIR(7));
+        }else if( i != 0){
+            mvwaddstr(view_menu_wind, y, x, menu_options[i].c_str());
+        }
+        y = y + 1;
+    }
+    wrefresh(view_menu_wind);
+
+    while((ch_b = getch()) != 'q'){
+        /*
+        switch(ch_b = getch()){
+            case KEY_UP:
+
+                break;
+            case KEY_DOWN:
+
+                break;
+            case '\n':
+
+                break;
+        }*/
+    }
+    delwin(view_menu_wind);
+    return 'q';
+
+}
+
 //if needed, kill the ant
 void kill_ant(){
     //TODO make kill the ant if needed
@@ -255,17 +314,17 @@ void kill_ant(){
 void view_ants(ant_struct ant, int tick, bool first_ant){
     //declaring function variables
     WINDOW *view_ants_wind;
-    int height, width, starty, startx, ch_b, total_ants, last_ant_shown, first_ant_shown;
+    int height, width, wind_y, wind_x, ch_b, total_ants, last_ant_shown, first_ant_shown;
 
     //ant window variable default values
     height = 20;
     width = 60;
-    starty = (LINES - height)/2;
-    startx = (COLS - width)/2;
+    wind_y = (LINES - height) / 2;
+    wind_x = (COLS - width) / 2;
     total_ants = ant.number.back();
 
     //creates the view ants window
-    view_ants_wind = newwin(height, width, starty, startx);
+    view_ants_wind = newwin(height, width, wind_y, wind_x);
     box(view_ants_wind, 0, 0);
     scrollok(view_ants_wind, TRUE);
     wrefresh(view_ants_wind);

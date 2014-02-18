@@ -71,6 +71,7 @@ class main
 
         bool check_for_edge(char game_map[25][81], player_struct player);
 
+        char view_menu();
 
 
 
