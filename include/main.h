@@ -34,16 +34,16 @@ class main
         };
 
         struct ant_struct{
-            std::vector<int> ant_number;
-            std::vector<int> ant_birth_tick;
-            std::vector<int> ant_age;
+            std::vector<int> number;
+            std::vector<int> birth_tick;
+            std::vector<int> age;
             std::vector<int> posy;
             std::vector<int> posx;
             std::vector<int> old_posy;
             std::vector<int> old_posx;
             std::vector<char> holding;
-            std::vector<char> type;
-            std::vector<char> ant_character;
+            std::vector<std::string> type;
+            std::vector<char> character;
         };
 
         int tick;
@@ -63,7 +63,6 @@ class main
         void initial_map_setup(char game_map[25][81], player_struct player);
         void map_refresh(char game_map[25][81]);
         void toggle_hex_status(char game_map[25][81], player_struct player);
-        void grow_ant();
         void kill_ant();
         void view_ants(ant_struct ant, int tick, bool first_ant);
 

@@ -16,6 +16,7 @@
 
 #include <ncurses.h>
 #include <vector>
+#include <string>
 #include "main.h"
 #include "map.h"
 
@@ -31,16 +32,16 @@ struct player_struct{
 
 
 struct ant_struct{
-    std::vector<int> ant_number;
-    std::vector<int> ant_birth_tick;
-    std::vector<int> ant_age;
+    std::vector<int> number;
+    std::vector<int> birth_tick;
+    std::vector<int> age;
     std::vector<int> posy;
     std::vector<int> posx;
     std::vector<int> old_posy;
     std::vector<int> old_posx;
     std::vector<char> holding;
-    std::vector<char> type;
-    std::vector<char> ant_character;
+    std::vector<std::string> type;
+    std::vector<char> character;
 };
 
 void initial_map_setup(char game_map[25][81], player_struct player);
@@ -48,7 +49,6 @@ void map_refresh(char game_map[25][81]);
 void toggle_hex_status(char game_map[25][81], player_struct player);
 
 void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
-void grow_ant();
 void kill_ant();
 void view_ants(ant_struct ant, int tick, bool first_ant);
 
@@ -80,6 +80,7 @@ int main(int argc, char *argv[]){
     init_pair(3, COLOR_MAGENTA, COLOR_MAGENTA);
     init_pair(4, COLOR_WHITE, COLOR_WHITE);
     init_pair(5, COLOR_BLUE, COLOR_BLUE);
+    init_pair(6, COLOR_CYAN, COLOR_CYAN);
 
     //set initial position and initialize the player
     player_struct player;
@@ -89,8 +90,8 @@ int main(int argc, char *argv[]){
 
     //creates the initial ant structure and sets an ant number to one
     ant_struct ant;
-    ant.ant_number.resize(1);
-    ant.ant_number.push_back(1);
+    ant.number.resize(1);
+    ant.number.push_back(1);
     first_ant = true;
 
     //show initial map
@@ -106,6 +107,8 @@ int main(int argc, char *argv[]){
         /*checks to see if a key was pressed,
         if one has been, it performs the necessary code to
         complete the desired action*/
+        //TODO change it to 'x' miliseconds later and let it be configurable in a config file
+        timeout(100);
         switch(ch){
             //move up
             case 'w':
@@ -174,19 +177,21 @@ int main(int argc, char *argv[]){
             //create ants with their initial value
             case 'c':
                 if(first_ant == true){
-                    vector_size = ant.ant_number.back();
+                    vector_size = ant.number.back();
                     first_ant = false;
                 }else if(first_ant == false){
-                    vector_size = ant.ant_number.back() + 1;
-                    ant.ant_number.resize(vector_size);
-                    ant.ant_number.push_back(vector_size);
+                    vector_size = ant.number.back() + 1;
+                    ant.number.resize(vector_size);
+                    ant.number.push_back(vector_size);
                 }
-                ant.ant_age.resize(vector_size);
-                ant.ant_age.push_back(0);
-                ant.ant_birth_tick.resize(vector_size);
-                ant.ant_birth_tick.push_back(tick);
-                ant.ant_character.resize(vector_size);
-                ant.ant_character.push_back('t');
+                ant.age.resize(vector_size);
+                ant.age.push_back(0);
+                ant.birth_tick.resize(vector_size);
+                ant.birth_tick.push_back(tick);
+                ant.character.resize(vector_size);
+                ant.character.push_back('e');
+                ant.type.resize(vector_size);
+                ant.type.push_back("Egg");
                 ant.posx.resize(vector_size);
                 ant.posx.push_back(player.posx);
                 ant.posy.resize(vector_size);
@@ -195,8 +200,8 @@ int main(int argc, char *argv[]){
                 }else{
                     ant.posy.push_back(player.posy + 2);
                 }
-                game_map[ant.posy.at(vector_size)][ant.posx.at(vector_size)] = ant.ant_character.at(vector_size);
-                mvprintw(24, 3, "%d", ant.ant_number.size());
+                game_map[ant.posy.at(vector_size)][ant.posx.at(vector_size)] = ant.character.at(vector_size);
+                mvprintw(24, 3, "%d", ant.number.size());
                 map_refresh(game_map);
                 break;
             case KEY_F(2):
@@ -205,26 +210,40 @@ int main(int argc, char *argv[]){
                 break;
         }
         //tick the game
-        //FIX ME the ticks are only going after a button has been pressed, this needs to happen indepently
         tick = tick + 1;
 
-        //after each tick updates the age of the ant
+        //after each tick updates the age of the ant then grows it if necessary
         if(first_ant == false){
-            total_ants = ant.ant_number.back();
+            total_ants = ant.number.back();
             for(int i = 1; i <= total_ants; i++){
-                ant.ant_age.at(i) = tick - ant.ant_birth_tick.at(i);
+                ant.age.at(i) = tick - ant.birth_tick.at(i);
             }
-        }
+            for(int i = 1; i <= ant.number.back(); i++){
+                switch(ant.age.at(i)){
+                    case 50:
+                        ant.type.at(i) = "Larva";
+                        ant.character.at(i) = 'l';
 
+                        break;
+                    case 100:
+                        ant.type.at(i) = "Pupa";
+                        ant.character.at(i) = 'p';
+                        break;
+                    case 150:
+                        ant.type.at(i) = "Adult";
+                        ant.character.at(i) = 'a';
+                        break;
+                    default:
+                        break;
+                }
+                game_map[ant.posy.at(i)][ant.posx.at(i)] = ant.character.at(i);
+            }
+            map_refresh(game_map);
+        }
     }
     //terminate program
     endwin();
     return 0;
-}
-
-//if needed, have the ant grow
-void grow_ant(){
-    //TODO make have the ant grow if needed
 }
 
 //if needed, kill the ant
@@ -243,7 +262,7 @@ void view_ants(ant_struct ant, int tick, bool first_ant){
     width = 60;
     starty = (LINES - height)/2;
     startx = (COLS - width)/2;
-    total_ants = ant.ant_number.back();
+    total_ants = ant.number.back();
 
     //creates the view ants window
     view_ants_wind = newwin(height, width, starty, startx);
@@ -264,7 +283,7 @@ void view_ants(ant_struct ant, int tick, bool first_ant){
             if(y > 18){
                 break;
             }
-            mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Age: %d | POS: %d, %d", ant.ant_number.at(i), ant.ant_age.at(i), ant.posx.at(i), ant.posy.at(i));
+            mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(i), ant.age.at(i), ant.type.at(i).c_str());
             y = y + 1;
             last_ant_shown = i;
         }
@@ -275,15 +294,15 @@ void view_ants(ant_struct ant, int tick, bool first_ant){
         while((ch_b = getch()) != 'q'){
             switch(ch_b){
                 case KEY_DOWN:
-                    if(last_ant_shown + 1 <= ant.ant_number.back()){
+                    if(last_ant_shown + 1 <= ant.number.back()){
                         last_ant_shown = last_ant_shown + 1;
                         first_ant_shown = first_ant_shown + 1;
                         wborder(view_ants_wind, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
                         wrefresh(view_ants_wind);
                         wscrl(view_ants_wind, 1);
                         box(view_ants_wind, 0, 0);
-                        mvwprintw(view_ants_wind, 18, 1, "Ant Number: %d | Age: %d | POS: %d, %d", ant.ant_number.at(last_ant_shown),
-                                  ant.ant_age.at(last_ant_shown), ant.posx.at(last_ant_shown), ant.posy.at(last_ant_shown));
+                        mvwprintw(view_ants_wind, 18, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(last_ant_shown),
+                                  ant.age.at(last_ant_shown), ant.type.at(last_ant_shown).c_str());
                         wrefresh(view_ants_wind);
                     }
                     break;
@@ -295,8 +314,8 @@ void view_ants(ant_struct ant, int tick, bool first_ant){
                         wrefresh(view_ants_wind);
                         wscrl(view_ants_wind, -1);
                         box(view_ants_wind, 0, 0);
-                        mvwprintw(view_ants_wind, 1, 1, "Ant Number: %d | Age: %d | POS: %d, %d", ant.ant_number.at(first_ant_shown),
-                                  ant.ant_age.at(first_ant_shown), ant.posx.at(first_ant_shown), ant.posy.at(first_ant_shown));
+                        mvwprintw(view_ants_wind, 1, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(first_ant_shown),
+                                  ant.age.at(first_ant_shown), ant.type.at(first_ant_shown).c_str());
                         wrefresh(view_ants_wind);
                     }
                     break;
@@ -640,10 +659,22 @@ void map_refresh(char game_map[25][81]){
                 attron(COLOR_PAIR(4));
                 mvaddch(y, x, game_map[y][x]);
                 attroff(COLOR_PAIR(4));
-            }else if(game_map[y][x] == 't'){
+            }else if(game_map[y][x] == 'e'){
                 attron(COLOR_PAIR(5));
                 mvaddch(y, x, game_map[y][x]);
                 attroff(COLOR_PAIR(5));
+            }else if(game_map[y][x] == 'l'){
+                attron(COLOR_PAIR(6));
+                mvaddch(y, x, game_map[y][x]);
+                attroff(COLOR_PAIR(6));
+            }else if(game_map[y][x] == 'p'){
+                attron(COLOR_PAIR(5));
+                mvaddch(y, x, game_map[y][x]);
+                attroff(COLOR_PAIR(5));
+            }else if(game_map[y][x] == 'a'){
+                attron(COLOR_PAIR(6));
+                mvaddch(y, x, game_map[y][x]);
+                attroff(COLOR_PAIR(6));
             }else{
                 mvaddch(y, x, game_map[y][x]);
             }
