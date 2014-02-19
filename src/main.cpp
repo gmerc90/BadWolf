@@ -15,10 +15,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
 
 #include <ncurses.h>
+#include <menu.h>
+#include <stdlib.h>>
 #include <vector>
 #include <string>
+#include <string.h>
 #include "main.h"
 #include "map.h"
+
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+#define CTRLD 4
 
 struct player_struct{
     int posy;
@@ -255,54 +261,66 @@ int main(int argc, char *argv[]){
 
 //create a menu where you will be able to choose quit, save, and load options
 char view_menu(){
-    //declaring initial function values
-    WINDOW *view_menu_wind;
-    int height, width, wind_y, wind_x, ch_b, highlighted_row;
-    int y = 1;
-    int x = 3;
-    std::string menu_options[] = {"Save", "Load", "Quit", "Close"};
-    char selected;
 
-    //menu window variable default values
-    height = 6;
-    width = 10;
+    char *choices[] = {"Save", "Load", "Quit", "Close"};
+    ITEM **menu_items;
+    MENU *game_menu;
+    WINDOW *game_menu_window;
+    int c, n_choices, height, width, wind_y, wind_x, title_x;
+    char *menu_title = "Game Menu";
+
+    //set window values
+    height = 10;
+    width = 20;
     wind_y = (LINES - height) / 2;
     wind_x = (COLS - width) / 2;
 
-    //create the window
-    view_menu_wind = newwin(height, width, wind_y, wind_x);
-    box(view_menu_wind, 0, 0);
-
-    //print the menu options
-    for(int i = 0; i < 4; i++){
-        if(i == 0){
-            attron(COLOR_PAIR(7));
-            mvwaddstr(view_menu_wind, y, x, menu_options[i].c_str());
-            attroff(COLOR_PAIR(7));
-        }else if( i != 0){
-            mvwaddstr(view_menu_wind, y, x, menu_options[i].c_str());
-        }
-        y = y + 1;
+    //creates the choices for the menu then creates the menu itself
+    n_choices = ARRAY_SIZE(choices);
+    menu_items = (ITEM **)calloc(n_choices + 1, sizeof(ITEM *));
+    for(int i = 0; i < n_choices; i++){
+        menu_items[i] = new_item(choices[i], "");
     }
-    wrefresh(view_menu_wind);
+    menu_items[n_choices] = (ITEM *)NULL;
+    game_menu = new_menu((ITEM **)menu_items);
 
-    while((ch_b = getch()) != 'q'){
-        /*
-        switch(ch_b = getch()){
-            case KEY_UP:
+    //create menu window and subwindow
+    game_menu_window = newwin(height, width, wind_y, wind_x);
+    keypad(game_menu_window, TRUE);
+    set_menu_win(game_menu, game_menu_window);
+    set_menu_sub(game_menu, derwin(game_menu_window, height - 2, width - 2, 2, 2));
+    wrefresh(game_menu_window);
 
-                break;
+    //print window b\order and title
+    title_x = (width - strlen(menu_title)) / 2;
+    box(game_menu_window, 0, 0);
+    mvwprintw(game_menu_window, 1, title_x, menu_title);
+    refresh();
+
+    //post the menu the refresh everything.
+    post_menu(game_menu);
+    refresh();
+    wrefresh(game_menu_window);
+
+    //main menu loop.
+    while((c = getch()) != 'q'){
+        switch(c){
             case KEY_DOWN:
-
+                menu_driver(game_menu, REQ_DOWN_ITEM);
                 break;
-            case '\n':
-
+            case KEY_UP:
+                menu_driver(game_menu, REQ_UP_ITEM);
                 break;
-        }*/
+        }
+        wrefresh(game_menu_window);
     }
-    delwin(view_menu_wind);
-    return 'q';
-
+    //cleanup before quit
+    unpost_menu(game_menu);
+    for(int i = 0; i < n_choices; i++){
+        free_item(menu_items[i]);
+    }
+    free_menu(game_menu);
+    delwin(game_menu_window);
 }
 
 //if needed, kill the ant
