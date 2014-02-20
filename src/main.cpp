@@ -16,7 +16,7 @@
 
 #include <ncurses.h>
 #include <menu.h>
-#include <stdlib.h>>
+#include <stdlib.h>
 #include <vector>
 #include <string>
 #include <string.h>
@@ -24,7 +24,6 @@
 #include "map.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
-#define CTRLD 4
 
 struct player_struct{
     int posy;
@@ -61,7 +60,7 @@ void load_game();
 
 bool check_for_edge(char game_map[25][81], player_struct player);
 
-char view_menu();
+std::string view_menu();
 
 int main(int argc, char *argv[]){
 
@@ -69,6 +68,7 @@ int main(int argc, char *argv[]){
     int ch, tick, vector_size, total_ants;
     char game_map[25][81];
     bool first_ant;
+    std::string chosen_menu_option;
 
     //standard starting stuff for Curses
     initscr();
@@ -110,14 +110,14 @@ int main(int argc, char *argv[]){
     tick = 0;
 
     //main game loop
-    while((ch = getch()) != KEY_F(1)){
+    while(chosen_menu_option != "Quit"){
 
         /*checks to see if a key was pressed,
         if one has been, it performs the necessary code to
         complete the desired action*/
         //TODO change it to 'x' miliseconds later and let it be configurable in a config file
         timeout(100);
-        switch(ch){
+        switch(ch = getch()){
             //move up
             case 'w':
                 player.replace_character_new = game_map[player.posy - 1][player.posx];
@@ -218,8 +218,8 @@ int main(int argc, char *argv[]){
                 map_refresh(game_map);
                 break;
             //bring up game menu
-            case KEY_F(3):
-                view_menu();
+            case KEY_F(1):
+                chosen_menu_option = view_menu();
                 map_refresh(game_map);
                 break;
         }
@@ -260,14 +260,16 @@ int main(int argc, char *argv[]){
 }
 
 //create a menu where you will be able to choose quit, save, and load options
-char view_menu(){
-
+std::string view_menu(){
+    //function variable declarations
     char *choices[] = {"Save", "Load", "Quit", "Close"};
+    char *menu_title = "Game Menu";
+    int ch_b, n_choices, height, width, wind_y, wind_x, title_x;
+    bool close_menu = false;
+    std::string cur_item;
     ITEM **menu_items;
     MENU *game_menu;
     WINDOW *game_menu_window;
-    int c, n_choices, height, width, wind_y, wind_x, title_x;
-    char *menu_title = "Game Menu";
 
     //set window values
     height = 10;
@@ -303,16 +305,21 @@ char view_menu(){
     wrefresh(game_menu_window);
 
     //main menu loop.
-    while((c = getch()) != 'q'){
-        switch(c){
+    while(close_menu != true){
+        switch(ch_b = getch()){
             case KEY_DOWN:
                 menu_driver(game_menu, REQ_DOWN_ITEM);
                 break;
             case KEY_UP:
                 menu_driver(game_menu, REQ_UP_ITEM);
                 break;
+            case 10:
+                cur_item = item_name(current_item(game_menu));
+                close_menu = true;
+                break;
         }
         wrefresh(game_menu_window);
+
     }
     //cleanup before quit
     unpost_menu(game_menu);
@@ -321,6 +328,7 @@ char view_menu(){
     }
     free_menu(game_menu);
     delwin(game_menu_window);
+    return cur_item;
 }
 
 //if needed, kill the ant
