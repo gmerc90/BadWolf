@@ -66,12 +66,12 @@ class main
         void kill_ant();
         void view_ants(ant_struct ant, int tick, bool first_ant);
 
-        void save_game();
+        void save_game(char game_map[25][81]);
         void load_game();
 
         bool check_for_edge(char game_map[25][81], player_struct player);
 
-        char view_menu();
+        std::string view_menu();
 
 
 

@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <string.h>
+#include <fstream>
 #include "main.h"
 #include "map.h"
 
@@ -55,7 +56,7 @@ void toggle_hex_status(char game_map[25][81], player_struct player);
 void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
 void kill_ant();
 void view_ants(ant_struct ant, int tick, bool first_ant);
-void save_game();
+void save_game(char game_map[25][81]);
 void load_game();
 
 bool check_for_edge(char game_map[25][81], player_struct player);
@@ -253,6 +254,14 @@ int main(int argc, char *argv[]){
             }
             map_refresh(game_map);
         }
+
+        if(chosen_menu_option == "Save"){
+            save_game(game_map);
+        }else if(chosen_menu_option =="Load"){
+            load_game();
+        }else if(chosen_menu_option == "Close"){
+            chosen_menu_option = "";
+        }
     }
     //terminate program
     endwin();
@@ -411,8 +420,20 @@ void view_ants(ant_struct ant, int tick, bool first_ant){
 }
 
 //saves all the data from the game to a text file
-void save_game(){
+void save_game(char game_map[25][81]){
 //TODO have function save all program data to a text file
+    std::ofstream game_map_file;
+    int y, x;
+    char output_char;
+    game_map_file.open("map.txt");
+    for(y = 0; y <= 24; y++);{
+        for(x = 0; x <= 79; x++){
+            output_char = game_map[y][x];
+            game_map_file.put(output_char);
+        }
+        game_map_file.put('\n');
+    }
+
 }
 
 //loads all data from a text file and puts it into the game
