@@ -66,7 +66,7 @@ class main
         void kill_ant();
         void view_ants(ant_struct ant, int tick, bool first_ant);
 
-        void save_game(char game_map[25][81]);
+        void save_game(char game_map[25][81], char derp[2][6]);
         void load_game();
 
         bool check_for_edge(char game_map[25][81], player_struct player);

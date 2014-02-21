@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include <string.h>
-#include <fstream>
+#include <stdio.h>
 #include "main.h"
 #include "map.h"
 
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]){
     curs_set(0);
 
     //set window size
-    resizeterm(25,80);
+    resizeterm(25,81);
 
     //color initialization
     init_pair(1, COLOR_RED, COLOR_RED);
@@ -421,19 +421,14 @@ void view_ants(ant_struct ant, int tick, bool first_ant){
 
 //saves all the data from the game to a text file
 void save_game(char game_map[25][81]){
-//TODO have function save all program data to a text file
-    std::ofstream game_map_file;
-    int y, x;
-    char output_char;
-    game_map_file.open("map.txt");
-    for(y = 0; y <= 24; y++);{
-        for(x = 0; x <= 79; x++){
-            output_char = game_map[y][x];
-            game_map_file.put(output_char);
-        }
-        game_map_file.put('\n');
+    int x;
+    FILE * game_map_file;
+    game_map_file = fopen("map.txt", "w");
+    for(x = 0; x <= 24; x++){
+        fputs(game_map[x], game_map_file);
+        fputs("\n", game_map_file);
     }
-
+    fclose(game_map_file);
 }
 
 //loads all data from a text file and puts it into the game
@@ -709,35 +704,40 @@ void initial_map_setup(char game_map[25][81], player_struct player){
     }
 
     //print the pieces of the map until full
-    int x2;
+    int x_b;
     int piece_number = 1;
     for(y = 1; y < 24; y++){
         switch(piece_number){
             case 1:
-                for(x2 = 1; x2 < 79; x2++){
-                    game_map[y][x2] = hex_map_piece_1[0][x2];
+                for(x_b = 1; x_b < 79; x_b++){
+                    game_map[y][x_b] = hex_map_piece_1[0][x_b];
                 }
                 piece_number = 2;
                 break;
             case 2:
-                for(x2 = 1; x2 < 79; x2++){
-                    game_map[y][x2] = hex_map_piece_2[0][x2];
+                for(x_b = 1; x_b < 79; x_b++){
+                    game_map[y][x_b] = hex_map_piece_2[0][x_b];
                 }
                 piece_number = 3;
                 break;
             case 3:
-                for(x2 = 1; x2 < 79; x2++){
-                    game_map[y][x2] = hex_map_piece_3[0][x2];
+                for(x_b = 1; x_b < 79; x_b++){
+                    game_map[y][x_b] = hex_map_piece_3[0][x_b];
                 }
                 piece_number = 4;
                 break;
             case 4:
-                for(x2 = 1; x2 < 79; x2++){
-                    game_map[y][x2] = hex_map_piece_4[0][x2];
+                for(x_b = 1; x_b < 79; x_b++){
+                    game_map[y][x_b] = hex_map_piece_4[0][x_b];
                 }
                 piece_number = 1;
                 break;
         }
+    }
+
+    //terminates each of the lines
+    for(y = 0; y <= 24; y++){
+        game_map[y][80] = '\0';
     }
 
     //put player in their initial position
