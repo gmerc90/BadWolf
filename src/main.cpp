@@ -48,6 +48,7 @@ struct ant_struct{
     std::vector<char> holding;
     std::vector<std::string> type;
     std::vector<char> character;
+    std::vector<bool> wings;
 };
 
 void initial_map_setup(char game_map[25][81], player_struct player);
@@ -55,9 +56,9 @@ void map_refresh(char game_map[25][81]);
 void toggle_hex_status(char game_map[25][81], player_struct player);
 void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
 void kill_ant();
-void view_ants(ant_struct ant, int tick, bool first_ant);
+void view_ants(ant_struct ant, int tick);
 void save_game(char game_map[25][81]);
-void load_game();
+void load_game(char game_map[25][81]);
 
 bool check_for_edge(char game_map[25][81], player_struct player);
 
@@ -68,7 +69,6 @@ int main(int argc, char *argv[]){
     //initial basic declarations
     int ch, tick, vector_size, total_ants;
     char game_map[25][81];
-    bool first_ant;
     std::string chosen_menu_option;
 
     //standard starting stuff for Curses
@@ -80,16 +80,16 @@ int main(int argc, char *argv[]){
     curs_set(0);
 
     //set window size
-    resizeterm(25,81);
+    resizeterm(25,80);
 
     //color initialization
     init_pair(1, COLOR_RED, COLOR_RED);
     init_pair(2, COLOR_YELLOW, COLOR_YELLOW);
     init_pair(3, COLOR_MAGENTA, COLOR_MAGENTA);
     init_pair(4, COLOR_WHITE, COLOR_WHITE);
-    init_pair(5, COLOR_BLUE, COLOR_BLUE);
-    init_pair(6, COLOR_CYAN, COLOR_CYAN);
-    init_pair(7, COLOR_BLUE, COLOR_WHITE);
+    init_pair(5, COLOR_GREEN, COLOR_BLACK);
+    init_pair(6, COLOR_MAGENTA, COLOR_BLACK);
+
 
     //set initial position and initialize the player
     player_struct player;
@@ -97,18 +97,37 @@ int main(int argc, char *argv[]){
     player.posx = COLS/2;
     player.replace_character = ' ';
 
-    //creates the initial ant structure and sets an ant number to one
-    ant_struct ant;
-    ant.number.resize(1);
-    ant.number.push_back(1);
-    first_ant = true;
-
     //show initial map
     initial_map_setup(game_map, player);
     map_refresh(game_map);
 
     //set initial tick value
     tick = 0;
+
+    //creates the initial ant structure and the queen
+    ant_struct ant;
+    ant.number.resize(1);
+    ant.number.push_back(1);
+    ant.age.resize(1);
+    ant.age.push_back(0);
+    ant.birth_tick.resize(1);
+    ant.birth_tick.push_back(tick);
+    ant.character.resize(1);
+    ant.character.push_back('Q');
+    ant.type.resize(1);
+    ant.type.push_back("Queen");
+    ant.wings.resize(1);
+    ant.wings.push_back(true);
+    ant.posx.resize(1);
+    ant.posx.push_back(player.posx);
+    ant.posy.resize(1);
+    if(game_map[player.posy - 1][player.posx] != '*'){
+        ant.posy.push_back(player.posy - 1);
+    }else{
+        ant.posy.push_back(player.posy - 2);
+    }
+    game_map[ant.posy.at(1)][ant.posx.at(1)] = ant.character.at(1);
+    map_refresh(game_map);
 
     //main game loop
     while(chosen_menu_option != "Quit"){
@@ -185,14 +204,9 @@ int main(int argc, char *argv[]){
                 break;
             //create ants with their initial value
             case 'c':
-                if(first_ant == true){
-                    vector_size = ant.number.back();
-                    first_ant = false;
-                }else if(first_ant == false){
-                    vector_size = ant.number.back() + 1;
-                    ant.number.resize(vector_size);
-                    ant.number.push_back(vector_size);
-                }
+                vector_size = ant.number.back() + 1;
+                ant.number.resize(vector_size);
+                ant.number.push_back(vector_size);
                 ant.age.resize(vector_size);
                 ant.age.push_back(0);
                 ant.birth_tick.resize(vector_size);
@@ -201,6 +215,8 @@ int main(int argc, char *argv[]){
                 ant.character.push_back('e');
                 ant.type.resize(vector_size);
                 ant.type.push_back("Egg");
+                ant.wings.resize(vector_size);
+                ant.wings.push_back(false);
                 ant.posx.resize(vector_size);
                 ant.posx.push_back(player.posx);
                 ant.posy.resize(vector_size);
@@ -215,7 +231,7 @@ int main(int argc, char *argv[]){
                 break;
             //view ants window
             case KEY_F(2):
-                view_ants(ant, tick, first_ant);
+                view_ants(ant, tick);
                 map_refresh(game_map);
                 break;
             //bring up game menu
@@ -228,12 +244,12 @@ int main(int argc, char *argv[]){
         tick = tick + 1;
 
         //after each tick updates the age of the ant then grows it if necessary
-        if(first_ant == false){
-            total_ants = ant.number.back();
-            for(int i = 1; i <= total_ants; i++){
-                ant.age.at(i) = tick - ant.birth_tick.at(i);
-            }
-            for(int i = 1; i <= ant.number.back(); i++){
+        total_ants = ant.number.back();
+        for(int i = 1; i <= total_ants; i++){
+            ant.age.at(i) = tick - ant.birth_tick.at(i);
+        }
+        for(int i = 1; i <= ant.number.back(); i++){
+            if(ant.type.at(i) != "Queen"){
                 switch(ant.age.at(i)){
                     case 50:
                         ant.type.at(i) = "Larva";
@@ -252,15 +268,18 @@ int main(int argc, char *argv[]){
                 }
                 game_map[ant.posy.at(i)][ant.posx.at(i)] = ant.character.at(i);
             }
-            map_refresh(game_map);
         }
+        map_refresh(game_map);
 
         if(chosen_menu_option == "Save"){
             save_game(game_map);
+            chosen_menu_option = " ";
         }else if(chosen_menu_option =="Load"){
-            load_game();
+            load_game(game_map);
+            chosen_menu_option = " ";
         }else if(chosen_menu_option == "Close"){
             chosen_menu_option = "";
+            chosen_menu_option = " ";
         }
     }
     //terminate program
@@ -346,7 +365,7 @@ void kill_ant(){
 }
 
 //view a list of all ants when tab is pressed, alive and dead, and are able to filter the list.
-void view_ants(ant_struct ant, int tick, bool first_ant){
+void view_ants(ant_struct ant, int tick){
     //declaring function variables
     WINDOW *view_ants_wind;
     int height, width, wind_y, wind_x, ch_b, total_ants, last_ant_shown, first_ant_shown;
@@ -365,57 +384,50 @@ void view_ants(ant_struct ant, int tick, bool first_ant){
     wrefresh(view_ants_wind);
 
     //checks to see if the first ant has been created, if it has been they will be printed out.
-    if(first_ant == true){
-        mvwprintw(view_ants_wind, 1, 1, "There are not any ants yet.");
-        wrefresh(view_ants_wind);
-        while((ch_b = getch()) != 'q'){
-
+    int y = 1;
+    for(int i = 1; i <= total_ants; i++){
+        if(y > 18){
+            break;
         }
-    }else if( first_ant == false){
-        int y = 1;
-        for(int i = 1; i <= total_ants; i++){
-            if(y > 18){
+        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(i), ant.age.at(i), ant.type.at(i).c_str());
+        y = y + 1;
+        last_ant_shown = i;
+    }
+    wrefresh(view_ants_wind);
+    first_ant_shown = 1;
+
+    //scroll the window up and down when the appropriate key is pressed and print out the necessary lines.
+    while((ch_b = getch()) != 'q'){
+        switch(ch_b){
+            case KEY_DOWN:
+                if(last_ant_shown + 1 <= ant.number.back()){
+                    last_ant_shown = last_ant_shown + 1;
+                    first_ant_shown = first_ant_shown + 1;
+                    wborder(view_ants_wind, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+                    wrefresh(view_ants_wind);
+                    wscrl(view_ants_wind, 1);
+                    box(view_ants_wind, 0, 0);
+                    mvwprintw(view_ants_wind, 18, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(last_ant_shown),
+                              ant.age.at(last_ant_shown), ant.type.at(last_ant_shown).c_str());
+                    wrefresh(view_ants_wind);
+                }
                 break;
-            }
-            mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(i), ant.age.at(i), ant.type.at(i).c_str());
-            y = y + 1;
-            last_ant_shown = i;
-        }
-        wrefresh(view_ants_wind);
-        first_ant_shown = 1;
-
-        //scroll the window up and down when the appropriate key is pressed and print out the necessary lines.
-        while((ch_b = getch()) != 'q'){
-            switch(ch_b){
-                case KEY_DOWN:
-                    if(last_ant_shown + 1 <= ant.number.back()){
-                        last_ant_shown = last_ant_shown + 1;
-                        first_ant_shown = first_ant_shown + 1;
-                        wborder(view_ants_wind, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-                        wrefresh(view_ants_wind);
-                        wscrl(view_ants_wind, 1);
-                        box(view_ants_wind, 0, 0);
-                        mvwprintw(view_ants_wind, 18, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(last_ant_shown),
-                                  ant.age.at(last_ant_shown), ant.type.at(last_ant_shown).c_str());
-                        wrefresh(view_ants_wind);
-                    }
-                    break;
-                case KEY_UP:
-                    if(first_ant_shown - 1 >= 1){
-                        last_ant_shown = last_ant_shown - 1;
-                        first_ant_shown = first_ant_shown -1;
-                        wborder(view_ants_wind, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-                        wrefresh(view_ants_wind);
-                        wscrl(view_ants_wind, -1);
-                        box(view_ants_wind, 0, 0);
-                        mvwprintw(view_ants_wind, 1, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(first_ant_shown),
-                                  ant.age.at(first_ant_shown), ant.type.at(first_ant_shown).c_str());
-                        wrefresh(view_ants_wind);
-                    }
-                    break;
-            }
+            case KEY_UP:
+                if(first_ant_shown - 1 >= 1){
+                    last_ant_shown = last_ant_shown - 1;
+                    first_ant_shown = first_ant_shown -1;
+                    wborder(view_ants_wind, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+                    wrefresh(view_ants_wind);
+                    wscrl(view_ants_wind, -1);
+                    box(view_ants_wind, 0, 0);
+                    mvwprintw(view_ants_wind, 1, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(first_ant_shown),
+                              ant.age.at(first_ant_shown), ant.type.at(first_ant_shown).c_str());
+                    wrefresh(view_ants_wind);
+                }
+                break;
         }
     }
+
     delwin(view_ants_wind);
 }
 
@@ -432,8 +444,9 @@ void save_game(char game_map[25][81]){
 }
 
 //loads all data from a text file and puts it into the game
-void load_game(){
+void load_game(char game_map[25][81]){
 //TODO have function load all data from a text file if told to
+
 }
 
 //change the state of the hex cube to selected or not
@@ -765,19 +778,11 @@ void map_refresh(char game_map[25][81]){
                 attron(COLOR_PAIR(4));
                 mvaddch(y, x, game_map[y][x]);
                 attroff(COLOR_PAIR(4));
-            }else if(game_map[y][x] == 'e'){
+            }else if(game_map[y][x] == 'e' || game_map[y][x] == 'l' || game_map[y][x] == 'p' || game_map[y][x] == 'a'){
                 attron(COLOR_PAIR(5));
                 mvaddch(y, x, game_map[y][x]);
                 attroff(COLOR_PAIR(5));
-            }else if(game_map[y][x] == 'l'){
-                attron(COLOR_PAIR(6));
-                mvaddch(y, x, game_map[y][x]);
-                attroff(COLOR_PAIR(6));
-            }else if(game_map[y][x] == 'p'){
-                attron(COLOR_PAIR(5));
-                mvaddch(y, x, game_map[y][x]);
-                attroff(COLOR_PAIR(5));
-            }else if(game_map[y][x] == 'a'){
+            }else if(game_map[y][x] == 'Q'){
                 attron(COLOR_PAIR(6));
                 mvaddch(y, x, game_map[y][x]);
                 attroff(COLOR_PAIR(6));

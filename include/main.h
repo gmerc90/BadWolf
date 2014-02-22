@@ -44,6 +44,7 @@ class main
             std::vector<char> holding;
             std::vector<std::string> type;
             std::vector<char> character;
+            std::vector<bool> wings;
         };
 
         int tick;
@@ -58,13 +59,11 @@ class main
     private:
         int ch, total_ants;
 
-        bool first_ant;
-
         void initial_map_setup(char game_map[25][81], player_struct player);
         void map_refresh(char game_map[25][81]);
         void toggle_hex_status(char game_map[25][81], player_struct player);
         void kill_ant();
-        void view_ants(ant_struct ant, int tick, bool first_ant);
+        void view_ants(ant_struct ant, int tick);
 
         void save_game(char game_map[25][81], char derp[2][6]);
         void load_game();
