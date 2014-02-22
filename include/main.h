@@ -61,7 +61,7 @@ class main
 
         void initial_map_setup(char game_map[25][81], player_struct player);
         void map_refresh(char game_map[25][81]);
-        void toggle_hex_status(char game_map[25][81], player_struct player);
+        char toggle_hex_status(char game_map[25][81], player_struct player);
         void kill_ant();
         void view_ants(ant_struct ant, int tick);
 
