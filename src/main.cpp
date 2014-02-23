@@ -471,13 +471,48 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
     //until all positive x and y and negative x and y values from the player have been checked, this loop will run.
     while(checked_x_pos != true && checked_y_pos != true && checked_x_neg
           != true && checked_y_neg != true){
-        //checks to see if the player is on a *
+
+        //checks to see if the player is on a * and if so, causes the function to quit
         if(player.replace_character == '*'){
             checked_x_neg = true;
             checked_x_pos = true;
             checked_y_neg = true;
             checked_y_pos = true;
+            replace_char = '*';
         }
+        //NW of player
+        if(game_map[player.posy + 1][player.posx - 1] = '*'){
+
+        }
+        //N of player
+        if(game_map[player.posy - 1][player.posx] = '*'){
+
+        }
+        //NE of player
+        if(game_map[player.posy - 1][player.posx + 1] = '*'){
+
+        }
+        //E of player
+        if(game_map[player.posy][player.posx + 1] = '*'){
+
+        }
+        //SE of player
+        if(game_map[player.posy + 1][player.posx + 1] = '*'){
+
+        }
+        //S of player
+        if(game_map[player.posy + 1][player.posx] = '*'){
+
+        }
+        //SW of player
+        if(game_map[player.posy + 1][player.posx - 1]){
+
+        }
+        //W of player
+        if(game_map[player.posy][player.posx - 1]){
+
+        }
+        /*
         //goes through checks and replaces all values in the + y range with .
         while(checked_y_pos != true){
             switch(game_map[player.posy + y][player.posx]){
@@ -753,7 +788,7 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
             checked_x_neg = false;
             x = 1;
             y = y + 1;
-        }
+        }*/
     }
     return replace_char;
 }
