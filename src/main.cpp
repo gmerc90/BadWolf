@@ -27,6 +27,8 @@
 #include "map.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+#define TERM_Y_SIZE 30
+#define TERM_X_SIZE 80
 
 struct player_struct{
     int posy;
@@ -85,7 +87,7 @@ int main(int argc, char *argv[]){
     curs_set(0);
 
     //set window size
-    resizeterm(25,80);
+    resizeterm(TERM_Y_SIZE,TERM_X_SIZE);
 
     //color initialization
     init_pair(1, COLOR_RED, COLOR_RED);
@@ -99,7 +101,7 @@ int main(int argc, char *argv[]){
 
     //set initial position and initialize the player
     player_struct player;
-    player.posy = LINES/2;
+    player.posy = (LINES - 5)/2;
     player.posx = COLS/2;
     player.replace_character = ':';
 
@@ -465,8 +467,8 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
     bool replace_character_determined = false;
     char map_replace_character, player_replace_char;
     std::vector<int> posy_change, posx_change;
-    int posy_check[] = {-1, -1, -1, 0, 1, 1, 1, 0};
-    int posx_check[] = {-1, 0, 1, 1, 1, 0, -1, -1};
+    int posy_check[] = { -1, 0, 1, 0};
+    int posx_check[] = { 0, 1, 0, -1};
     while(fields_checked != true){
 
         //check to find out what to replace spaces with and if the player is on a * spot.
@@ -481,12 +483,8 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
             player_replace_char = ':';
         }
 
-        //clear the vectors
-        posy_change.clear();
-        posx_change.clear();
-
         //Check spaces to replace
-        for(int i = 0; i <= 7; i++){
+        for(int i = 0; i <= 3; i++){
             if(game_map[player.posy + posy_check[i]][player.posx + posx_check[i]] != '*'){
                 posy_change.resize(posy_change.size() + 1);
                 posy_change.push_back(posy_check[i]);
@@ -501,9 +499,19 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
         }
 
         //replace the checked spaces
-        for(int i = 0; i <= posy_change.size(); i++){
+        /*for(int i = 0; i <= posy_change.size(); i++){
             game_map[player.posy + posy_change[i]][player.posx + posx_change[i]] = map_replace_character;
+        }*/
+        int x = 1;
+        for(int i = 0; i <= posy_change.size(); i++){
+            mvprintw(25, x, "%d, %d |", posx_change[i], posy_change[i]);
+            x = x + 5;
         }
+
+        //clear the vectors
+        posy_change.clear();
+        posx_change.clear();
+
         fields_checked = true;
     }
     return player_replace_char;
@@ -578,8 +586,8 @@ void initial_map_setup(char game_map[25][81], player_struct player){
 //refreshes the map to show any changes that have been made
 void map_refresh(char game_map[25][81]){
     int x, y;
-    for(y = 0; y <=24; y++){
-        for(x = 0; x <=79; x++){
+    for(y = 0; y <= 24; y++){
+        for(x = 0; x <= 79; x++){
             if(game_map[y][x] == '#'){
                 attron(COLOR_PAIR(1));
                 mvaddch(y, x, game_map[y][x]);
