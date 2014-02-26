@@ -459,25 +459,16 @@ void load_game(char game_map[25][81]){
 }
 
 //change the state of the hex cube to selected or not
-//FIXME for some reason the block directly above the player will not toggle off
-//FIXME the block directly above the player that remains toggled on prevents the cell from correctly toggling on again
 char toggle_hex_status(char game_map[25][81], player_struct player){
 
-    bool fields_checked = false;
-    bool replace_character_determined = false;
     char map_replace_character, player_replace_char;
     int posy_change[] = { -1, 0, 1, 0};
     int posx_change[] = { 0, 1, 0, -1};
-    bool nesw_check[] = {false, false, false, false};
+    int pos_neg_one[] = { 1, -1};
 
-    while(fields_checked != true){
-
-        //check to find out what to replace spaces with and if the player is on a * spot.
-        if(player.replace_character == '*'){
-            player_replace_char = player.replace_character;
-            fields_checked = true;
-            break;
-        }else if(player.replace_character == ':'){
+    //check to find out what to replace spaces with and if the player is on a * spot.
+    if(player.replace_character != '*'){
+        if(player.replace_character == ':'){
             map_replace_character = '.';
             player_replace_char = '.';
         }else if(player.replace_character == '.'){
@@ -485,28 +476,36 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
             player_replace_char = ':';
         }
 
-        //Check spaces to replace
-        for(int i = 0; i <= 3; i++){
-            if((game_map[player.posy + posy_change[i]][player.posx + posx_change[i]] != '*') && (game_map[player.posy + posy_change[i]][player.posx + posx_change[i]] != '#')){
-                nesw_check[i] = true;
-            }
-        }
-
         //check to see if there are any fields left to replace
 
         //replace the checked spaces
         for(int i = 0; i <= 3; i++){
-            if(nesw_check[i] == true){
-                int old_y = player.posy;
-                int old_x = player.posx;
-                while((game_map[old_y + posy_change[i]][old_x + posx_change[i]] != '*') && (game_map[old_y + posy_change[i]][old_x + posx_change[i]] != '#')){
-                    game_map[old_y + posy_change[i]][old_x + posx_change[i]] = map_replace_character;
-                    old_y = old_y + posy_change[i];
-                    old_x = old_x + posx_change[i];
+            int old_y = player.posy;
+            int old_x = player.posx;
+            int old_y_b, old_x_b;
+            while((game_map[old_y + posy_change[i]][old_x + posx_change[i]] != '*') && (game_map[old_y + posy_change[i]][old_x + posx_change[i]] != '#')){
+                game_map[old_y + posy_change[i]][old_x + posx_change[i]] = map_replace_character;
+                old_y = old_y + posy_change[i];
+                old_x = old_x + posx_change[i];
+                old_y_b = old_y;
+                old_x_b = old_x;
+                for(int i = 0; i <= 1; i++){
+                    while((game_map[old_y_b + pos_neg_one[i]][old_x_b] != '*') && (game_map[old_y_b + pos_neg_one[i]][old_x_b] != '#')){
+                        game_map[old_y_b + pos_neg_one[i]][old_x_b] = map_replace_character;
+                        old_y_b = old_y_b + pos_neg_one[i];
+                    }
+                    old_y_b = old_y;
+                    while((game_map[old_y_b][old_x_b + pos_neg_one[i]] != '*') && (game_map[old_y_b][old_x_b + pos_neg_one[i]] != '#')){
+                        game_map[old_y_b][old_x_b + pos_neg_one[i]] = map_replace_character;
+                        old_x_b = old_x_b + pos_neg_one[i];
+                    }
+                    old_y_b = old_y;
+                    old_x_b = old_x;
                 }
             }
         }
-        fields_checked = true;
+    }else{
+        player_replace_char = player.replace_character;
     }
     return player_replace_char;
 }
