@@ -471,10 +471,15 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
     int posx_check[] = { 0, 1, 0, -1};
     while(fields_checked != true){
 
+        //clear the vectors
+        posy_change.clear();
+        posx_change.clear();
+
         //check to find out what to replace spaces with and if the player is on a * spot.
         if(player.replace_character == '*'){
             player_replace_char = player.replace_character;
             fields_checked = true;
+            break;
         }else if(player.replace_character == ':'){
             map_replace_character = '.';
             player_replace_char = '.';
@@ -487,32 +492,27 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
         for(int i = 0; i <= 3; i++){
             if(game_map[player.posy + posy_check[i]][player.posx + posx_check[i]] != '*'){
                 posy_change.resize(posy_change.size() + 1);
-                posy_change.push_back(posy_check[i]);
                 posx_change.resize(posx_change.size() + 1);
-                posx_change.push_back(posx_check[i]);
-            }
+                posy_change.push_back(posy_check[i] + '\0');
+                posx_change.push_back(posx_check[i] + '\0');
+            }/*else{
+                posy_change.push_back('\0');
+                posx_change.push_back('\0');
+            }*/
         }
 
-        //check to see if there are no fields left to replace
+        //check to see if there are any fields left to replace
         if(posy_change.size() == 0){
             fields_checked = true;
         }
 
         //replace the checked spaces
-        /*for(int i = 0; i <= posy_change.size(); i++){
+        for(int i = 1; i <= posy_change.size(); i++){
             game_map[player.posy + posy_change[i]][player.posx + posx_change[i]] = map_replace_character;
-        }*/
-        int x = 1;
-        for(int i = 0; i <= posy_change.size(); i++){
-            mvprintw(25, x, "%d, %d |", posx_change[i], posy_change[i]);
-            x = x + 5;
         }
 
-        //clear the vectors
-        posy_change.clear();
-        posx_change.clear();
-
         fields_checked = true;
+
     }
     return player_replace_char;
 }
