@@ -466,14 +466,11 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
     bool fields_checked = false;
     bool replace_character_determined = false;
     char map_replace_character, player_replace_char;
-    std::vector<int> posy_change, posx_change;
-    int posy_check[] = { -1, 0, 1, 0};
-    int posx_check[] = { 0, 1, 0, -1};
-    while(fields_checked != true){
+    int posy_change[] = { -1, 0, 1, 0};
+    int posx_change[] = { 0, 1, 0, -1};
+    bool nesw_check[] = {false, false, false, false};
 
-        //clear the vectors
-        posy_change.clear();
-        posx_change.clear();
+    while(fields_checked != true){
 
         //check to find out what to replace spaces with and if the player is on a * spot.
         if(player.replace_character == '*'){
@@ -490,29 +487,26 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
 
         //Check spaces to replace
         for(int i = 0; i <= 3; i++){
-            if(game_map[player.posy + posy_check[i]][player.posx + posx_check[i]] != '*'){
-                posy_change.resize(posy_change.size() + 1);
-                posx_change.resize(posx_change.size() + 1);
-                posy_change.push_back(posy_check[i] + '\0');
-                posx_change.push_back(posx_check[i] + '\0');
-            }/*else{
-                posy_change.push_back('\0');
-                posx_change.push_back('\0');
-            }*/
+            if((game_map[player.posy + posy_change[i]][player.posx + posx_change[i]] != '*') && (game_map[player.posy + posy_change[i]][player.posx + posx_change[i]] != '#')){
+                nesw_check[i] = true;
+            }
         }
 
         //check to see if there are any fields left to replace
-        if(posy_change.size() == 0){
-            fields_checked = true;
-        }
 
         //replace the checked spaces
-        for(int i = 1; i <= posy_change.size(); i++){
-            game_map[player.posy + posy_change[i]][player.posx + posx_change[i]] = map_replace_character;
+        for(int i = 0; i <= 3; i++){
+            if(nesw_check[i] == true){
+                int old_y = player.posy;
+                int old_x = player.posx;
+                while((game_map[old_y + posy_change[i]][old_x + posx_change[i]] != '*') && (game_map[old_y + posy_change[i]][old_x + posx_change[i]] != '#')){
+                    game_map[old_y + posy_change[i]][old_x + posx_change[i]] = map_replace_character;
+                    old_y = old_y + posy_change[i];
+                    old_x = old_x + posx_change[i];
+                }
+            }
         }
-
         fields_checked = true;
-
     }
     return player_replace_char;
 }
