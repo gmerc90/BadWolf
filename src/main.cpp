@@ -14,9 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#include <ncurses.h>
-#include <menu.h>
-#include <stdlib.h>
+#include <curses.h>
 #include <vector>
 #include <string>
 #include <string.h>
@@ -26,7 +24,6 @@
 #include "main.h"
 #include "map.h"
 
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 #define TERM_Y_SIZE 30
 #define TERM_X_SIZE 80
 
@@ -87,7 +84,7 @@ int main(int argc, char *argv[]){
     curs_set(0);
 
     //set window size
-    resizeterm(TERM_Y_SIZE,TERM_X_SIZE);
+    resize_term(TERM_Y_SIZE,TERM_X_SIZE);
 
     //color initialization
     init_pair(1, COLOR_RED, COLOR_RED);
@@ -301,11 +298,9 @@ std::string view_menu(){
     //function variable declarations
     char *choices[] = {"Save", "Load", "Quit", "Close"};
     char *menu_title = "Game Menu";
-    int ch_b, n_choices, height, width, wind_y, wind_x, title_x;
+    int ch_b, height, width, wind_y, wind_x, title_x, menu_item_x, menu_item_y, cur_item_y, cur_item_num;
     bool close_menu = false;
     std::string cur_item;
-    ITEM **menu_items;
-    MENU *game_menu;
     WINDOW *game_menu_window;
 
     //set window values
@@ -314,56 +309,63 @@ std::string view_menu(){
     wind_y = (LINES - height) / 2;
     wind_x = (COLS - width) / 2;
 
-    //creates the choices for the menu then creates the menu itself
-    n_choices = ARRAY_SIZE(choices);
-    menu_items = (ITEM **)calloc(n_choices + 1, sizeof(ITEM *));
-    for(int i = 0; i < n_choices; i++){
-        menu_items[i] = new_item(choices[i], "");
-    }
-    menu_items[n_choices] = (ITEM *)NULL;
-    game_menu = new_menu((ITEM **)menu_items);
-
     //create menu window and subwindow
     game_menu_window = newwin(height, width, wind_y, wind_x);
     keypad(game_menu_window, TRUE);
-    set_menu_win(game_menu, game_menu_window);
-    set_menu_sub(game_menu, derwin(game_menu_window, height - 2, width - 2, 2, 2));
     wrefresh(game_menu_window);
 
-    //print window b\order and title
+    //print window border, menu title, and menu options.
     title_x = (width - strlen(menu_title)) / 2;
     box(game_menu_window, 0, 0);
+    wattron(game_menu_window, A_BOLD);
     mvwprintw(game_menu_window, 1, title_x, menu_title);
-    refresh();
-
-    //post the menu the refresh everything.
-    post_menu(game_menu);
-    refresh();
+    wattroff(game_menu_window, A_BOLD);
+    menu_item_y = 3;
+    menu_item_x = (width - strlen(choices[0])) / 2;
+    mvwprintw(game_menu_window, menu_item_y, menu_item_x, "%s<", choices[0]);
+    cur_item_y = menu_item_y;
+    cur_item_num = 0;
+    menu_item_y = 4;
+    for(int i = 1; i <= 3; i++){
+        menu_item_x = (width - strlen(choices[i])) / 2;
+        mvwprintw(game_menu_window, menu_item_y, menu_item_x, choices[i]);
+        menu_item_y = menu_item_y + 1;
+    }
     wrefresh(game_menu_window);
 
     //main menu loop.
     while(close_menu != true){
         switch(ch_b = getch()){
             case KEY_DOWN:
-                menu_driver(game_menu, REQ_DOWN_ITEM);
+                if(cur_item_num + 1 <= 3){
+                    wmove(game_menu_window, cur_item_y, 0);
+                    wclrtoeol(game_menu_window);
+                    mvwprintw(game_menu_window, cur_item_y, ((width - strlen(choices[cur_item_num])) / 2), choices[cur_item_num]);
+                    cur_item_num = cur_item_num + 1;
+                    cur_item_y = cur_item_y + 1;
+                    mvwprintw(game_menu_window, cur_item_y, ((width - strlen(choices[cur_item_num])) / 2), "%s<", choices[cur_item_num]);
+                    box(game_menu_window, 0, 0);
+                }
                 break;
             case KEY_UP:
-                menu_driver(game_menu, REQ_UP_ITEM);
+                if(cur_item_num - 1 >= 0){
+                    wmove(game_menu_window, cur_item_y, 0);
+                    wclrtoeol(game_menu_window);
+                    mvwprintw(game_menu_window, cur_item_y, ((width - strlen(choices[cur_item_num])) / 2), choices[cur_item_num]);
+                    cur_item_num = cur_item_num - 1;
+                    cur_item_y = cur_item_y - 1;
+                    mvwprintw(game_menu_window, cur_item_y, ((width - strlen(choices[cur_item_num])) / 2), "%s<", choices[cur_item_num]);
+                    box(game_menu_window, 0, 0);
+                }
                 break;
             case 10:
-                cur_item = item_name(current_item(game_menu));
+                cur_item = choices[cur_item_num];
                 close_menu = true;
                 break;
         }
         wrefresh(game_menu_window);
-
     }
     //cleanup before quit
-    unpost_menu(game_menu);
-    for(int i = 0; i < n_choices; i++){
-        free_item(menu_items[i]);
-    }
-    free_menu(game_menu);
     delwin(game_menu_window);
     return cur_item;
 }
@@ -509,7 +511,6 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
     }
     return player_replace_char;
 }
-
 
 //checks to see if player is trying to move out of the map
 bool check_for_edge(char game_map[25][81], player_struct player){
