@@ -52,21 +52,22 @@ struct ant_struct{
     std::vector<bool> wings;
 };
 
-bool check_for_edge(char game_map[25][81], player_struct player);
+bool check_for_edge(char rendered_map[25][81], player_struct player);
 
-char toggle_hex_status(char game_map[25][81], player_struct player);
+char toggle_hex_status(char rendered_map[25][81], player_struct player);
+char* copy_map(char map_to_copy[25][81]);
 
 int select_ant(ant_struct ant, player_struct player);
 
 std::string view_menu();
 
-void initial_map_setup(char game_map[25][81], player_struct player);
-void map_refresh(char game_map[25][81]);
-void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
+void initial_map_setup(char rendered_map[25][81], player_struct player);
+void map_refresh(char rendered_map[25][81]);
+void create_ant(int tick, ant_struct ant, player_struct player, char rendered_map[25][81]);
 void kill_ant();
 void view_ants(ant_struct ant, int tick);
-void save_game(char game_map[25][81]);
-void load_game(char game_map[25][81]);
+void save_game(char rendered_map[25][81]);
+void load_game(char rendered_map[25][81]);
 
 int main(int argc, char *argv[]){
 
@@ -76,8 +77,11 @@ int main(int argc, char *argv[]){
     //initial basic declarations
     int ch, tick, vector_size, total_ants;
     int selected_ant = NULL;
-    char game_map[25][81];
+    char rendered_map[25][81];
+    char underground_map[25][81];
+    char surface_map[25][81];
     std::string chosen_menu_option;
+    std::string current_map;
 
     //standard starting stuff for Curses
     initscr();
@@ -107,8 +111,10 @@ int main(int argc, char *argv[]){
     player.replace_character = ':';
 
     //show initial map
-    initial_map_setup(game_map, player);
-    map_refresh(game_map);
+    initial_map_setup(rendered_map, player);
+    map_refresh(rendered_map);
+    underground_map = copy_map(rendered_map);
+    current_map = "underground";
 
     //set initial tick value
     tick = 0;
@@ -130,13 +136,13 @@ int main(int argc, char *argv[]){
     ant.posx.resize(1);
     ant.posx.push_back(player.posx);
     ant.posy.resize(1);
-    if(game_map[player.posy - 1][player.posx] != '*'){
+    if(rendered_map[player.posy - 1][player.posx] != '*'){
         ant.posy.push_back(player.posy - 1);
     }else{
         ant.posy.push_back(player.posy - 2);
     }
-    game_map[ant.posy.at(1)][ant.posx.at(1)] = ant.character.at(1);
-    map_refresh(game_map);
+    rendered_map[ant.posy.at(1)][ant.posx.at(1)] = ant.character.at(1);
+    map_refresh(rendered_map);
 
     //main game loop
     while(chosen_menu_option != "Quit"){
@@ -149,66 +155,66 @@ int main(int argc, char *argv[]){
         switch(ch = getch()){
             //move up
             case 'w':
-                player.replace_character_new = game_map[player.posy - 1][player.posx];
+                player.replace_character_new = rendered_map[player.posy - 1][player.posx];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posy = player.posy - 1;
-                if(check_for_edge(game_map, player) == false){
-                    game_map[player.old_posy][player.old_posx] = player.replace_character;
-                    game_map[player.posy][player.posx] = player.player_character;
+                if(check_for_edge(rendered_map, player) == false){
+                    rendered_map[player.old_posy][player.old_posx] = player.replace_character;
+                    rendered_map[player.posy][player.posx] = player.player_character;
                     player.replace_character = player.replace_character_new;
                 }else{
                     player.posy = player.posy + 1;
                 }
-                map_refresh(game_map);
+                map_refresh(rendered_map);
                 break;
 
             //move left
             case 'a':
-                player.replace_character_new = game_map[player.posy][player.posx - 1];
+                player.replace_character_new = rendered_map[player.posy][player.posx - 1];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posx = player.posx - 1;
-                if(check_for_edge(game_map, player) == false){
-                    game_map[player.old_posy][player.old_posx] = player.replace_character;
-                    game_map[player.posy][player.posx] = player.player_character;
+                if(check_for_edge(rendered_map, player) == false){
+                    rendered_map[player.old_posy][player.old_posx] = player.replace_character;
+                    rendered_map[player.posy][player.posx] = player.player_character;
                     player.replace_character = player.replace_character_new;
                 }else{
                     player.posx = player.posx + 1;
                 }
-                map_refresh(game_map);
+                map_refresh(rendered_map);
                 break;
 
             //move down
             case 's':
-                player.replace_character_new = game_map[player.posy + 1][player.posx];
+                player.replace_character_new = rendered_map[player.posy + 1][player.posx];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posy = player.posy + 1;
-                if(check_for_edge(game_map, player) == false){
-                    game_map[player.old_posy][player.old_posx] = player.replace_character;
-                    game_map[player.posy][player.posx] = player.player_character;
+                if(check_for_edge(rendered_map, player) == false){
+                    rendered_map[player.old_posy][player.old_posx] = player.replace_character;
+                    rendered_map[player.posy][player.posx] = player.player_character;
                     player.replace_character = player.replace_character_new;
                 }else{
                     player.posy = player.posy - 1;
                 }
-                map_refresh(game_map);
+                map_refresh(rendered_map);
                 break;
 
             //move right
             case 'd':
-                player.replace_character_new = game_map[player.posy][player.posx + 1];
+                player.replace_character_new = rendered_map[player.posy][player.posx + 1];
                 player.old_posx = player.posx;
                 player.old_posy = player.posy;
                 player.posx = player.posx + 1;
-                if(check_for_edge(game_map, player) == false){
-                    game_map[player.old_posy][player.old_posx] = player.replace_character;
-                    game_map[player.posy][player.posx] = player.player_character;
+                if(check_for_edge(rendered_map, player) == false){
+                    rendered_map[player.old_posy][player.old_posx] = player.replace_character;
+                    rendered_map[player.posy][player.posx] = player.player_character;
                     player.replace_character = player.replace_character_new;
                 }else{
                     player.posx = player.posx - 1;
                 }
-                map_refresh(game_map);
+                map_refresh(rendered_map);
                 break;
 
             //select an ant
@@ -222,8 +228,8 @@ int main(int argc, char *argv[]){
 
             //select a cell
             case 't':
-                player.replace_character = toggle_hex_status(game_map, player);
-                map_refresh(game_map);
+                player.replace_character = toggle_hex_status(rendered_map, player);
+                map_refresh(rendered_map);
                 break;
 
             //create ants with their initial value
@@ -236,26 +242,36 @@ int main(int argc, char *argv[]){
                 ant.type.push_back("Egg");
                 ant.wings.push_back(false);
                 ant.posx.push_back(player.posx);
-                if(game_map[player.posy + 1][player.posx] != '*'){
+                if(rendered_map[player.posy + 1][player.posx] != '*'){
                     ant.posy.push_back(player.posy + 1);
                 }else{
                     ant.posy.push_back(player.posy + 2);
                 }
-                game_map[ant.posy.at(vector_size)][ant.posx.at(vector_size)] = ant.character.at(vector_size);
+                rendered_map[ant.posy.at(vector_size)][ant.posx.at(vector_size)] = ant.character.at(vector_size);
                 mvprintw(24, 3, "%d", ant.number.size());
-                map_refresh(game_map);
+                map_refresh(rendered_map);
                 break;
 
             //bring up game menu
             case KEY_F(1):
                 chosen_menu_option = view_menu();
-                map_refresh(game_map);
+                map_refresh(rendered_map);
+                //take the appropriate actions for the chosen menu option.
+                if(chosen_menu_option == "Save"){
+                    save_game(rendered_map);
+                    chosen_menu_option = " ";
+                }else if(chosen_menu_option =="Load"){
+                    load_game(rendered_map);
+                    chosen_menu_option = " ";
+                }else if(chosen_menu_option == "Close"){
+                    chosen_menu_option = " ";
+                }
                 break;
 
             //view ants window
             case KEY_F(2):
                 view_ants(ant, tick);
-                map_refresh(game_map);
+                map_refresh(rendered_map);
                 break;
         }
         //tick the game
@@ -284,10 +300,10 @@ int main(int argc, char *argv[]){
                     default:
                         break;
                 }
-                game_map[ant.posy.at(i)][ant.posx.at(i)] = ant.character.at(i);
+                rendered_map[ant.posy.at(i)][ant.posx.at(i)] = ant.character.at(i);
             }
         }
-        map_refresh(game_map);
+        map_refresh(rendered_map);
 
         //show selected ant information
         if(selected_ant != NULL){
@@ -299,20 +315,22 @@ int main(int argc, char *argv[]){
             clrtoeol();
             mvprintw(26, 1, "Number:   | Type:   | Age:   ");
         }
-        if(chosen_menu_option == "Save"){
-            save_game(game_map);
-            chosen_menu_option = " ";
-        }else if(chosen_menu_option =="Load"){
-            load_game(game_map);
-            chosen_menu_option = " ";
-        }else if(chosen_menu_option == "Close"){
-            chosen_menu_option = " ";
-        }
     }
     //terminate program
     endwin();
     return 0;
 }
+
+//copy a map from one array to another
+char* copy_map(char map_to_copy[25][81]){
+    char copied_map[25][81];
+    for(int y = 0; i <= 24; i++){
+        for(int x = 0; x <= 80; x++)
+            copied_map[y][x] = map_to_copy[y][x];
+    }
+    return copied_map;
+}
+
 
 //select an ant to give commands to
 int select_ant(ant_struct ant, player_struct player){
@@ -484,25 +502,25 @@ void view_ants(ant_struct ant, int tick){
 }
 
 //saves all the data from the game to a text file
-void save_game(char game_map[25][81]){
+void save_game(char rendered_map[25][81]){
     int x;
-    FILE * game_map_file;
-    game_map_file = fopen("map.txt", "w");
+    FILE * rendered_map_file;
+    rendered_map_file = fopen("map.txt", "w");
     for(x = 0; x <= 24; x++){
-        fputs(game_map[x], game_map_file);
-        fputs("\n", game_map_file);
+        fputs(rendered_map[x], rendered_map_file);
+        fputs("\n", rendered_map_file);
     }
-    fclose(game_map_file);
+    fclose(rendered_map_file);
 }
 
 //loads all data from a text file and puts it into the game
-void load_game(char game_map[25][81]){
+void load_game(char rendered_map[25][81]){
 //TODO have function load all data from a text file if told to
 
 }
 
 //change the state of the hex cube to selected or not
-char toggle_hex_status(char game_map[25][81], player_struct player){
+char toggle_hex_status(char rendered_map[25][81], player_struct player){
 
     char map_replace_character, player_replace_char;
     int posy_change[] = { -1, 0, 1, 0};
@@ -521,25 +539,26 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
 
         //check to see if there are any fields left to replace
 
+        //TODO think of better names for old_y/x(_b)
         //replace the checked spaces
         for(int i = 0; i <= 3; i++){
             int old_y = player.posy;
             int old_x = player.posx;
             int old_y_b, old_x_b;
-            while((game_map[old_y + posy_change[i]][old_x + posx_change[i]] != '*') && (game_map[old_y + posy_change[i]][old_x + posx_change[i]] != '#')){
-                game_map[old_y + posy_change[i]][old_x + posx_change[i]] = map_replace_character;
+            while((rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] != '*') && (rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] != '#')){
+                rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] = map_replace_character;
                 old_y = old_y + posy_change[i];
                 old_x = old_x + posx_change[i];
                 old_y_b = old_y;
                 old_x_b = old_x;
                 for(int i = 0; i <= 1; i++){
-                    while((game_map[old_y_b + pos_neg_one[i]][old_x_b] != '*') && (game_map[old_y_b + pos_neg_one[i]][old_x_b] != '#')){
-                        game_map[old_y_b + pos_neg_one[i]][old_x_b] = map_replace_character;
+                    while((rendered_map[old_y_b + pos_neg_one[i]][old_x_b] != '*') && (rendered_map[old_y_b + pos_neg_one[i]][old_x_b] != '#')){
+                        rendered_map[old_y_b + pos_neg_one[i]][old_x_b] = map_replace_character;
                         old_y_b = old_y_b + pos_neg_one[i];
                     }
                     old_y_b = old_y;
-                    while((game_map[old_y_b][old_x_b + pos_neg_one[i]] != '*') && (game_map[old_y_b][old_x_b + pos_neg_one[i]] != '#')){
-                        game_map[old_y_b][old_x_b + pos_neg_one[i]] = map_replace_character;
+                    while((rendered_map[old_y_b][old_x_b + pos_neg_one[i]] != '*') && (rendered_map[old_y_b][old_x_b + pos_neg_one[i]] != '#')){
+                        rendered_map[old_y_b][old_x_b + pos_neg_one[i]] = map_replace_character;
                         old_x_b = old_x_b + pos_neg_one[i];
                     }
                     old_y_b = old_y;
@@ -554,8 +573,8 @@ char toggle_hex_status(char game_map[25][81], player_struct player){
 }
 
 //checks to see if player is trying to move out of the map
-bool check_for_edge(char game_map[25][81], player_struct player){
-    char test_char = game_map[player.posy][player.posx];
+bool check_for_edge(char rendered_map[25][81], player_struct player){
+    char test_char = rendered_map[player.posy][player.posx];
     if(test_char == '#'){
         return true;
     }else{
@@ -564,17 +583,17 @@ bool check_for_edge(char game_map[25][81], player_struct player){
 }
 
 //prints out hex_map from map.h
-void initial_map_setup(char game_map[25][81], player_struct player){
+void initial_map_setup(char rendered_map[25][81], player_struct player){
 
     //print the # border in red
     int x, y;
     for(x = 0; x <= 79; x++){
-        game_map[0][x] = '#';
-        game_map[24][x] = '#';
+        rendered_map[0][x] = '#';
+        rendered_map[24][x] = '#';
     }
     for(y = 0; y <= 24; y++){
-        game_map[y][0] = '#';
-        game_map[y][79] = '#';
+        rendered_map[y][0] = '#';
+        rendered_map[y][79] = '#';
     }
 
     //print the pieces of the map until full
@@ -584,25 +603,25 @@ void initial_map_setup(char game_map[25][81], player_struct player){
         switch(piece_number){
             case 1:
                 for(x_b = 1; x_b < 79; x_b++){
-                    game_map[y][x_b] = hex_map_piece_1[0][x_b];
+                    rendered_map[y][x_b] = hex_map_piece_1[0][x_b];
                 }
                 piece_number = 2;
                 break;
             case 2:
                 for(x_b = 1; x_b < 79; x_b++){
-                    game_map[y][x_b] = hex_map_piece_2[0][x_b];
+                    rendered_map[y][x_b] = hex_map_piece_2[0][x_b];
                 }
                 piece_number = 3;
                 break;
             case 3:
                 for(x_b = 1; x_b < 79; x_b++){
-                    game_map[y][x_b] = hex_map_piece_3[0][x_b];
+                    rendered_map[y][x_b] = hex_map_piece_3[0][x_b];
                 }
                 piece_number = 4;
                 break;
             case 4:
                 for(x_b = 1; x_b < 79; x_b++){
-                    game_map[y][x_b] = hex_map_piece_4[0][x_b];
+                    rendered_map[y][x_b] = hex_map_piece_4[0][x_b];
                 }
                 piece_number = 1;
                 break;
@@ -611,48 +630,48 @@ void initial_map_setup(char game_map[25][81], player_struct player){
 
     //terminates each of the lines
     for(y = 0; y <= 24; y++){
-        game_map[y][80] = '\0';
+        rendered_map[y][80] = '\0';
     }
 
     //put player in their initial position
-    game_map[player.posy][player.posx] = player.player_character;
+    rendered_map[player.posy][player.posx] = player.player_character;
 }
 
 //refreshes the map to show any changes that have been made
-void map_refresh(char game_map[25][81]){
+void map_refresh(char rendered_map[25][81]){
     int x, y;
     for(y = 0; y <= 24; y++){
         for(x = 0; x <= 79; x++){
-            if(game_map[y][x] == '#'){
+            if(rendered_map[y][x] == '#'){
                 attron(COLOR_PAIR(1));
-                mvaddch(y, x, game_map[y][x]);
+                mvaddch(y, x, rendered_map[y][x]);
                 attroff(COLOR_PAIR(1));
-            }else if(game_map[y][x] == '@'){
+            }else if(rendered_map[y][x] == '@'){
                 attron(COLOR_PAIR(2));
-                mvaddch(y, x, game_map[y][x]);
+                mvaddch(y, x, rendered_map[y][x]);
                 attroff(COLOR_PAIR(2));
-            }else if(game_map[y][x] == '.'){
+            }else if(rendered_map[y][x] == '.'){
                 attron(COLOR_PAIR(3));
-                mvaddch(y, x, game_map[y][x]);
+                mvaddch(y, x, rendered_map[y][x]);
                 attroff(COLOR_PAIR(3));
-            }else if(game_map[y][x] == '*'){
+            }else if(rendered_map[y][x] == '*'){
                 attron(COLOR_PAIR(4));
-                mvaddch(y, x, game_map[y][x]);
+                mvaddch(y, x, rendered_map[y][x]);
                 attroff(COLOR_PAIR(4));
-            }else if(game_map[y][x] == 'e' || game_map[y][x] == 'l' || game_map[y][x] == 'p' || game_map[y][x] == 'a'){
+            }else if(rendered_map[y][x] == 'e' || rendered_map[y][x] == 'l' || rendered_map[y][x] == 'p' || rendered_map[y][x] == 'a'){
                 attron(COLOR_PAIR(5));
-                mvaddch(y, x, game_map[y][x]);
+                mvaddch(y, x, rendered_map[y][x]);
                 attroff(COLOR_PAIR(5));
-            }else if(game_map[y][x] == 'Q'){
+            }else if(rendered_map[y][x] == 'Q'){
                 attron(COLOR_PAIR(6));
-                mvaddch(y, x, game_map[y][x]);
+                mvaddch(y, x, rendered_map[y][x]);
                 attroff(COLOR_PAIR(6));
-            }else if(game_map[y][x] == ':'){
+            }else if(rendered_map[y][x] == ':'){
                     attron(COLOR_PAIR(7));
-                    mvaddch(y, x, game_map[y][x]);
+                    mvaddch(y, x, rendered_map[y][x]);
                     attroff(COLOR_PAIR(7));
             }else{
-                mvaddch(y, x, game_map[y][x]);
+                mvaddch(y, x, rendered_map[y][x]);
             }
         }
     }

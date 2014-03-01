@@ -61,13 +61,15 @@ class main
 
         bool check_for_edge(char game_map[25][81], player_struct player);
 
+        char* copy_map(char map_to_copy[25][81]);
+        char toggle_hex_status(char game_map[25][81], player_struct player);
+
         int select_ant(ant_struct ant, player_struct player);
 
         std::string view_menu();
 
         void initial_map_setup(char game_map[25][81], player_struct player);
         void map_refresh(char game_map[25][81]);
-        char toggle_hex_status(char game_map[25][81], player_struct player);
         void kill_ant();
         void view_ants(ant_struct ant, int tick);
 
