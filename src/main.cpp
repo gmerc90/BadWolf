@@ -52,18 +52,21 @@ struct ant_struct{
     std::vector<bool> wings;
 };
 
+bool check_for_edge(char game_map[25][81], player_struct player);
+
+char toggle_hex_status(char game_map[25][81], player_struct player);
+
+int select_ant(ant_struct ant, player_struct player);
+
+std::string view_menu();
+
 void initial_map_setup(char game_map[25][81], player_struct player);
 void map_refresh(char game_map[25][81]);
-char toggle_hex_status(char game_map[25][81], player_struct player);
 void create_ant(int tick, ant_struct ant, player_struct player, char game_map[25][81]);
 void kill_ant();
 void view_ants(ant_struct ant, int tick);
 void save_game(char game_map[25][81]);
 void load_game(char game_map[25][81]);
-
-bool check_for_edge(char game_map[25][81], player_struct player);
-
-std::string view_menu();
 
 int main(int argc, char *argv[]){
 
@@ -72,6 +75,7 @@ int main(int argc, char *argv[]){
 
     //initial basic declarations
     int ch, tick, vector_size, total_ants;
+    int selected_ant = NULL;
     char game_map[25][81];
     std::string chosen_menu_option;
 
@@ -158,6 +162,7 @@ int main(int argc, char *argv[]){
                 }
                 map_refresh(game_map);
                 break;
+
             //move left
             case 'a':
                 player.replace_character_new = game_map[player.posy][player.posx - 1];
@@ -173,6 +178,7 @@ int main(int argc, char *argv[]){
                 }
                 map_refresh(game_map);
                 break;
+
             //move down
             case 's':
                 player.replace_character_new = game_map[player.posy + 1][player.posx];
@@ -188,6 +194,7 @@ int main(int argc, char *argv[]){
                 }
                 map_refresh(game_map);
                 break;
+
             //move right
             case 'd':
                 player.replace_character_new = game_map[player.posy][player.posx + 1];
@@ -203,29 +210,32 @@ int main(int argc, char *argv[]){
                 }
                 map_refresh(game_map);
                 break;
-            //select a cell
+
+            //select an ant
             case 'e':
+                selected_ant = select_ant(ant, player);
+                break;
+            //clear selected ant with Shift + e
+            case 'E':
+                selected_ant = NULL;
+                break;
+
+            //select a cell
+            case 't':
                 player.replace_character = toggle_hex_status(game_map, player);
                 map_refresh(game_map);
                 break;
+
             //create ants with their initial value
             case 'c':
                 vector_size = ant.number.back() + 1;
-                ant.number.resize(vector_size);
                 ant.number.push_back(vector_size);
-                ant.age.resize(vector_size);
                 ant.age.push_back(0);
-                ant.birth_tick.resize(vector_size);
                 ant.birth_tick.push_back(tick);
-                ant.character.resize(vector_size);
                 ant.character.push_back('e');
-                ant.type.resize(vector_size);
                 ant.type.push_back("Egg");
-                ant.wings.resize(vector_size);
                 ant.wings.push_back(false);
-                ant.posx.resize(vector_size);
                 ant.posx.push_back(player.posx);
-                ant.posy.resize(vector_size);
                 if(game_map[player.posy + 1][player.posx] != '*'){
                     ant.posy.push_back(player.posy + 1);
                 }else{
@@ -235,14 +245,16 @@ int main(int argc, char *argv[]){
                 mvprintw(24, 3, "%d", ant.number.size());
                 map_refresh(game_map);
                 break;
-            //view ants window
-            case KEY_F(2):
-                view_ants(ant, tick);
-                map_refresh(game_map);
-                break;
+
             //bring up game menu
             case KEY_F(1):
                 chosen_menu_option = view_menu();
+                map_refresh(game_map);
+                break;
+
+            //view ants window
+            case KEY_F(2):
+                view_ants(ant, tick);
                 map_refresh(game_map);
                 break;
         }
@@ -254,7 +266,7 @@ int main(int argc, char *argv[]){
         for(int i = 1; i <= total_ants; i++){
             ant.age.at(i) = tick - ant.birth_tick.at(i);
         }
-        for(int i = 1; i <= ant.number.back(); i++){
+        for(int i = 1; i <= total_ants; i++){
             if(ant.type.at(i) != "Queen"){
                 switch(ant.age.at(i)){
                     case 50:
@@ -277,6 +289,16 @@ int main(int argc, char *argv[]){
         }
         map_refresh(game_map);
 
+        //show selected ant information
+        if(selected_ant != NULL){
+            move(26, 0);
+            clrtoeol();
+            mvprintw(26, 1, "Number: %d | Type: %s | Age: %d", ant.number.at(selected_ant), ant.type.at(selected_ant).c_str(), ant.age.at(selected_ant));
+        }else{
+            move(26, 0);
+            clrtoeol();
+            mvprintw(26, 1, "Number:   | Type:   | Age:   ");
+        }
         if(chosen_menu_option == "Save"){
             save_game(game_map);
             chosen_menu_option = " ";
@@ -284,13 +306,30 @@ int main(int argc, char *argv[]){
             load_game(game_map);
             chosen_menu_option = " ";
         }else if(chosen_menu_option == "Close"){
-            chosen_menu_option = "";
             chosen_menu_option = " ";
         }
     }
     //terminate program
     endwin();
     return 0;
+}
+
+//select an ant to give commands to
+int select_ant(ant_struct ant, player_struct player){
+    //declaring variables
+    int selected_ant, total_ants;
+
+    //check all the ants until it finds one that matches the player coordinates
+    total_ants = ant.number.back();
+    for(int i = 0; i <= total_ants; i++){
+        if((ant.posy[i] == player.posy) && (ant.posx[i] == player.posx)){
+            selected_ant = i;
+            break;
+        }else{
+            selected_ant = NULL;
+        }
+    }
+    return selected_ant;
 }
 
 //create a menu where you will be able to choose quit, save, and load options
@@ -306,7 +345,7 @@ std::string view_menu(){
     //set window values
     height = 10;
     width = 20;
-    wind_y = (LINES - height) / 2;
+    wind_y = ((LINES - 5) - height) / 2;
     wind_x = (COLS - width) / 2;
 
     //create menu window and subwindow
@@ -358,6 +397,7 @@ std::string view_menu(){
                     box(game_menu_window, 0, 0);
                 }
                 break;
+            //enter key
             case 10:
                 cur_item = choices[cur_item_num];
                 close_menu = true;
@@ -365,8 +405,9 @@ std::string view_menu(){
         }
         wrefresh(game_menu_window);
     }
-    //cleanup before quit
+    //cleanup before quit and returns the selected option to the main function
     delwin(game_menu_window);
+    clear();
     return cur_item;
 }
 
@@ -384,7 +425,7 @@ void view_ants(ant_struct ant, int tick){
     //ant window variable default values
     height = 20;
     width = 60;
-    wind_y = (LINES - height) / 2;
+    wind_y = ((LINES - 5) - height) / 2;
     wind_x = (COLS - width) / 2;
     total_ants = ant.number.back();
 
@@ -438,8 +479,8 @@ void view_ants(ant_struct ant, int tick){
                 break;
         }
     }
-
     delwin(view_ants_wind);
+    clear();
 }
 
 //saves all the data from the game to a text file
