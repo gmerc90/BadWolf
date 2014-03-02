@@ -58,7 +58,7 @@ class main
 
         bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player);
 
-        char toggle_hex_status(std::vector<std::string>  rendered_map, player_struct player);
+        std::vector<std::string> toggle_hex_status(std::vector<std::string>  new_rendered_map, player_struct player);
 
         int select_ant(ant_struct ant, player_struct player);
 

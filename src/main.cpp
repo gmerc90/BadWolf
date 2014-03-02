@@ -53,7 +53,7 @@ struct ant_struct{
 
 bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player);
 
-char toggle_hex_status(std::vector<std::string>  rendered_map, player_struct player);
+std::vector<std::string> toggle_hex_status(std::vector<std::string>  new_rendered_map, player_struct player);
 std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy);
 std::vector<std::string> initial_map_setup(player_struct player);
 
@@ -225,7 +225,7 @@ int main(int argc, char *argv[]){
 
             //select a cell
             case 't':
-                player.replace_character = toggle_hex_status(rendered_map, player);
+                rendered_map = toggle_hex_status(rendered_map, player);
                 map_refresh(rendered_map);
                 break;
 
@@ -519,7 +519,7 @@ void load_game(std::vector<std::string>  rendered_map){
 
 ///FIXME to work with the new format
 //change the state of the hex cube to selected or not
-char toggle_hex_status(std::vector<std::string>  rendered_map, player_struct player){
+std::vector<std::string> toggle_hex_status(std::vector<std::string>  new_rendered_map, player_struct player){
 
     char map_replace_character, player_replace_char;
     int posy_change[] = { -1, 0, 1, 0};
@@ -538,26 +538,26 @@ char toggle_hex_status(std::vector<std::string>  rendered_map, player_struct pla
 
         //check to see if there are any fields left to replace
 
-        //TODO think of better names for old_y/x(_b)
+        ///TODO think of better names for old_y/x(_b)
         //replace the checked spaces
         for(int i = 0; i <= 3; i++){
             int old_y = player.posy;
             int old_x = player.posx;
             int old_y_b, old_x_b;
-            while((rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] != '*') && (rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] != '#')){
-                rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] = map_replace_character;
+            while((new_rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] != '*') && (new_rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] != '#')){
+                new_rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] = map_replace_character;
                 old_y = old_y + posy_change[i];
                 old_x = old_x + posx_change[i];
                 old_y_b = old_y;
                 old_x_b = old_x;
                 for(int i = 0; i <= 1; i++){
-                    while((rendered_map[old_y_b + pos_neg_one[i]][old_x_b] != '*') && (rendered_map[old_y_b + pos_neg_one[i]][old_x_b] != '#')){
-                        rendered_map[old_y_b + pos_neg_one[i]][old_x_b] = map_replace_character;
+                    while((new_rendered_map[old_y_b + pos_neg_one[i]][old_x_b] != '*') && (new_rendered_map[old_y_b + pos_neg_one[i]][old_x_b] != '#')){
+                        new_rendered_map[old_y_b + pos_neg_one[i]][old_x_b] = map_replace_character;
                         old_y_b = old_y_b + pos_neg_one[i];
                     }
                     old_y_b = old_y;
-                    while((rendered_map[old_y_b][old_x_b + pos_neg_one[i]] != '*') && (rendered_map[old_y_b][old_x_b + pos_neg_one[i]] != '#')){
-                        rendered_map[old_y_b][old_x_b + pos_neg_one[i]] = map_replace_character;
+                    while((new_rendered_map[old_y_b][old_x_b + pos_neg_one[i]] != '*') && (new_rendered_map[old_y_b][old_x_b + pos_neg_one[i]] != '#')){
+                        new_rendered_map[old_y_b][old_x_b + pos_neg_one[i]] = map_replace_character;
                         old_x_b = old_x_b + pos_neg_one[i];
                     }
                     old_y_b = old_y;
@@ -568,7 +568,7 @@ char toggle_hex_status(std::vector<std::string>  rendered_map, player_struct pla
     }else{
         player_replace_char = player.replace_character;
     }
-    return player_replace_char;
+    return new_rendered_map;
 }
 
 //checks to see if player is trying to move out of the map
