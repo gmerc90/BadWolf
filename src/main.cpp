@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include "main.h"
-#include "map.h"
 
 #define TERM_Y_SIZE 30
 #define TERM_X_SIZE 80
@@ -52,22 +51,22 @@ struct ant_struct{
     std::vector<bool> wings;
 };
 
-bool check_for_edge(char rendered_map[25][81], player_struct player);
+bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player);
 
-char toggle_hex_status(char rendered_map[25][81], player_struct player);
-char* copy_map(char map_to_copy[25][81]);
+char toggle_hex_status(std::vector<std::string>  rendered_map, player_struct player);
+std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy);
+std::vector<std::string> initial_map_setup(player_struct player);
 
 int select_ant(ant_struct ant, player_struct player);
 
 std::string view_menu();
 
-void initial_map_setup(char rendered_map[25][81], player_struct player);
-void map_refresh(char rendered_map[25][81]);
-void create_ant(int tick, ant_struct ant, player_struct player, char rendered_map[25][81]);
+void map_refresh(std::vector<std::string>  rendered_map);
+void create_ant(int tick, ant_struct ant, player_struct player, std::vector<std::string>  rendered_map);
 void kill_ant();
 void view_ants(ant_struct ant, int tick);
-void save_game(char rendered_map[25][81]);
-void load_game(char rendered_map[25][81]);
+void save_game(std::vector<std::string>  rendered_map);
+void load_game(std::vector<std::string>  rendered_map);
 
 int main(int argc, char *argv[]){
 
@@ -77,9 +76,7 @@ int main(int argc, char *argv[]){
     //initial basic declarations
     int ch, tick, vector_size, total_ants;
     int selected_ant = NULL;
-    char rendered_map[25][81];
-    char underground_map[25][81];
-    char surface_map[25][81];
+    std::vector<std::string>  rendered_map, underground_map, surface_map;
     std::string chosen_menu_option;
     std::string current_map;
 
@@ -111,9 +108,9 @@ int main(int argc, char *argv[]){
     player.replace_character = ':';
 
     //show initial map
-    initial_map_setup(rendered_map, player);
+    rendered_map = initial_map_setup(player);
     map_refresh(rendered_map);
-    underground_map = copy_map(rendered_map);
+    //underground_map = copy_map(rendered_map);
     current_map = "underground";
 
     //set initial tick value
@@ -150,7 +147,7 @@ int main(int argc, char *argv[]){
         /*checks to see if a key was pressed,
         if one has been, it performs the necessary code to
         complete the desired action*/
-        //TODO change it to 'x' miliseconds later and let it be configurable in a config file
+        ///TODO change it to 'x' miliseconds later and let it be configurable in a config file
         timeout(100);
         switch(ch = getch()){
             //move up
@@ -322,9 +319,9 @@ int main(int argc, char *argv[]){
 }
 
 //copy a map from one array to another
-char* copy_map(char map_to_copy[25][81]){
-    char copied_map[25][81];
-    for(int y = 0; i <= 24; i++){
+std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy){
+    std::vector<std::string> copied_map;
+    for(int y = 0; y <= 24; y++){
         for(int x = 0; x <= 80; x++)
             copied_map[y][x] = map_to_copy[y][x];
     }
@@ -431,7 +428,7 @@ std::string view_menu(){
 
 //if needed, kill the ant
 void kill_ant(){
-    //TODO make kill the ant if needed
+    ///TODO make kill the ant if needed
 }
 
 //view a list of all ants when tab is pressed, alive and dead, and are able to filter the list.
@@ -501,26 +498,28 @@ void view_ants(ant_struct ant, int tick){
     clear();
 }
 
+///FIXME to work with the new format
 //saves all the data from the game to a text file
-void save_game(char rendered_map[25][81]){
-    int x;
+void save_game(std::vector<std::string>  rendered_map){
+    /*int x;
     FILE * rendered_map_file;
     rendered_map_file = fopen("map.txt", "w");
     for(x = 0; x <= 24; x++){
         fputs(rendered_map[x], rendered_map_file);
         fputs("\n", rendered_map_file);
     }
-    fclose(rendered_map_file);
+    fclose(rendered_map_file);*/
 }
 
 //loads all data from a text file and puts it into the game
-void load_game(char rendered_map[25][81]){
-//TODO have function load all data from a text file if told to
+void load_game(std::vector<std::string>  rendered_map){
+///TODO have function load all data from a text file if told to
 
 }
 
+///FIXME to work with the new format
 //change the state of the hex cube to selected or not
-char toggle_hex_status(char rendered_map[25][81], player_struct player){
+char toggle_hex_status(std::vector<std::string>  rendered_map, player_struct player){
 
     char map_replace_character, player_replace_char;
     int posy_change[] = { -1, 0, 1, 0};
@@ -573,7 +572,7 @@ char toggle_hex_status(char rendered_map[25][81], player_struct player){
 }
 
 //checks to see if player is trying to move out of the map
-bool check_for_edge(char rendered_map[25][81], player_struct player){
+bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player){
     char test_char = rendered_map[player.posy][player.posx];
     if(test_char == '#'){
         return true;
@@ -583,17 +582,31 @@ bool check_for_edge(char rendered_map[25][81], player_struct player){
 }
 
 //prints out hex_map from map.h
-void initial_map_setup(char rendered_map[25][81], player_struct player){
+std::vector<std::string> initial_map_setup(player_struct player){
+
+    //map piece declaration.
+    std::vector<std::string> initial_map;
+    std::string hex_map_piece_1, hex_map_piece_2, hex_map_piece_3, hex_map_piece_4;
+
+    hex_map_piece_1.append("#::******::::::::******::::::::******::::::::******::::::::******::::::::******#");
+    hex_map_piece_2.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
+    hex_map_piece_3.append("#*::::::::******::::::::******::::::::******::::::::******::::::::******:::::::#");
+    hex_map_piece_4.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
+
+    //fill the vector with empty spaces.
+    for(int i = 0; i <= 24; i++){
+        initial_map.push_back("                                                                                 ");
+    }
 
     //print the # border in red
     int x, y;
     for(x = 0; x <= 79; x++){
-        rendered_map[0][x] = '#';
-        rendered_map[24][x] = '#';
+        initial_map.at(0).at(x) = '#';
+        initial_map.at(24).at(x) = '#';
     }
     for(y = 0; y <= 24; y++){
-        rendered_map[y][0] = '#';
-        rendered_map[y][79] = '#';
+        initial_map.at(y).at(0) = '#';
+        initial_map.at(y).at(79) = '#';
     }
 
     //print the pieces of the map until full
@@ -602,27 +615,19 @@ void initial_map_setup(char rendered_map[25][81], player_struct player){
     for(y = 1; y < 24; y++){
         switch(piece_number){
             case 1:
-                for(x_b = 1; x_b < 79; x_b++){
-                    rendered_map[y][x_b] = hex_map_piece_1[0][x_b];
-                }
+                initial_map.at(y) = hex_map_piece_1;
                 piece_number = 2;
                 break;
             case 2:
-                for(x_b = 1; x_b < 79; x_b++){
-                    rendered_map[y][x_b] = hex_map_piece_2[0][x_b];
-                }
+                initial_map.at(y) = hex_map_piece_2;
                 piece_number = 3;
                 break;
             case 3:
-                for(x_b = 1; x_b < 79; x_b++){
-                    rendered_map[y][x_b] = hex_map_piece_3[0][x_b];
-                }
+                initial_map.at(y) = hex_map_piece_3;
                 piece_number = 4;
                 break;
             case 4:
-                for(x_b = 1; x_b < 79; x_b++){
-                    rendered_map[y][x_b] = hex_map_piece_4[0][x_b];
-                }
+                initial_map.at(y) = hex_map_piece_4;
                 piece_number = 1;
                 break;
         }
@@ -630,15 +635,16 @@ void initial_map_setup(char rendered_map[25][81], player_struct player){
 
     //terminates each of the lines
     for(y = 0; y <= 24; y++){
-        rendered_map[y][80] = '\0';
+        initial_map[y][80] = '\0';
     }
 
     //put player in their initial position
-    rendered_map[player.posy][player.posx] = player.player_character;
+    initial_map[player.posy][player.posx] = player.player_character;
+    return initial_map;
 }
 
 //refreshes the map to show any changes that have been made
-void map_refresh(char rendered_map[25][81]){
+void map_refresh(std::vector<std::string>  rendered_map){
     int x, y;
     for(y = 0; y <= 24; y++){
         for(x = 0; x <= 79; x++){

@@ -49,31 +49,28 @@ class main
 
         int tick;
 
-        char game_map[25][81];
-
-        void save();
-        void load();
+        std::vector<std::string>  rendered_map;
 
     protected:
 
     private:
         int ch, total_ants;
 
-        bool check_for_edge(char game_map[25][81], player_struct player);
+        bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player);
 
-        char* copy_map(char map_to_copy[25][81]);
-        char toggle_hex_status(char game_map[25][81], player_struct player);
+        char toggle_hex_status(std::vector<std::string>  rendered_map, player_struct player);
 
         int select_ant(ant_struct ant, player_struct player);
 
         std::string view_menu();
 
-        void initial_map_setup(char game_map[25][81], player_struct player);
-        void map_refresh(char game_map[25][81]);
+        std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy);
+        std::vector<std::string> initial_map_setup(player_struct player);
+
+        void map_refresh(std::vector<std::string>  rendered_map);
         void kill_ant();
         void view_ants(ant_struct ant, int tick);
-
-        void save_game(char game_map[25][81]);
+        void save_game(std::vector<std::string>  rendered_map);
         void load_game();
 
 
