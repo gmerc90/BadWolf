@@ -54,11 +54,15 @@ class main
     protected:
 
     private:
+
+        struct toggle_hex_return{
+            std::vector<std::string> return_map;
+            char return_player_replace_character;
+        };
+
         int ch, total_ants;
 
         bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player);
-
-        std::vector<std::string> toggle_hex_status(std::vector<std::string>  new_rendered_map, player_struct player);
 
         int select_ant(ant_struct ant, player_struct player);
 
@@ -66,6 +70,8 @@ class main
 
         std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy);
         std::vector<std::string> initial_map_setup(player_struct player);
+
+        toggle_hex_return toggle_hex_status(std::vector<std::string>  new_rendered_map, player_struct player);
 
         void map_refresh(std::vector<std::string>  rendered_map);
         void kill_ant();

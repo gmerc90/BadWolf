@@ -51,15 +51,21 @@ struct ant_struct{
     std::vector<bool> wings;
 };
 
-bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player);
+struct toggle_hex_return{
+    std::vector<std::string> return_map;
+    char return_player_replace_character;
+};
 
-std::vector<std::string> toggle_hex_status(std::vector<std::string>  new_rendered_map, player_struct player);
-std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy);
-std::vector<std::string> initial_map_setup(player_struct player);
+bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player);
 
 int select_ant(ant_struct ant, player_struct player);
 
 std::string view_menu();
+
+std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy);
+std::vector<std::string> initial_map_setup(player_struct player);
+
+toggle_hex_return toggle_hex_status(std::vector<std::string>  new_rendered_map, player_struct player);
 
 void map_refresh(std::vector<std::string>  rendered_map);
 void create_ant(int tick, ant_struct ant, player_struct player, std::vector<std::string>  rendered_map);
@@ -79,6 +85,7 @@ int main(int argc, char *argv[]){
     std::vector<std::string>  rendered_map, underground_map, surface_map;
     std::string chosen_menu_option;
     std::string current_map;
+    toggle_hex_return toggle_hex_return_values;
 
     //standard starting stuff for Curses
     initscr();
@@ -225,7 +232,9 @@ int main(int argc, char *argv[]){
 
             //select a cell
             case 't':
-                rendered_map = toggle_hex_status(rendered_map, player);
+                toggle_hex_return_values = toggle_hex_status(rendered_map, player);
+                rendered_map = toggle_hex_return_values.return_map;
+                player.replace_character = toggle_hex_return_values.return_player_replace_character;
                 map_refresh(rendered_map);
                 break;
 
@@ -517,23 +526,23 @@ void load_game(std::vector<std::string>  rendered_map){
 
 }
 
-///FIXME to work with the new format
 //change the state of the hex cube to selected or not
-std::vector<std::string> toggle_hex_status(std::vector<std::string>  new_rendered_map, player_struct player){
+toggle_hex_return toggle_hex_status(std::vector<std::string>  new_map, player_struct player){
 
-    char map_replace_character, player_replace_char;
+    char map_replace_character;
     int posy_change[] = { -1, 0, 1, 0};
     int posx_change[] = { 0, 1, 0, -1};
     int pos_neg_one[] = { 1, -1};
+    toggle_hex_return return_values;
 
     //check to find out what to replace spaces with and if the player is on a * spot.
     if(player.replace_character != '*'){
         if(player.replace_character == ':'){
             map_replace_character = '.';
-            player_replace_char = '.';
+            return_values.return_player_replace_character = '.';
         }else if(player.replace_character == '.'){
             map_replace_character = ':';
-            player_replace_char = ':';
+            return_values.return_player_replace_character = ':';
         }
 
         //check to see if there are any fields left to replace
@@ -544,20 +553,20 @@ std::vector<std::string> toggle_hex_status(std::vector<std::string>  new_rendere
             int old_y = player.posy;
             int old_x = player.posx;
             int old_y_b, old_x_b;
-            while((new_rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] != '*') && (new_rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] != '#')){
-                new_rendered_map[old_y + posy_change[i]][old_x + posx_change[i]] = map_replace_character;
+            while((new_map[old_y + posy_change[i]][old_x + posx_change[i]] != '*') && (new_map[old_y + posy_change[i]][old_x + posx_change[i]] != '#')){
+                new_map[old_y + posy_change[i]][old_x + posx_change[i]] = map_replace_character;
                 old_y = old_y + posy_change[i];
                 old_x = old_x + posx_change[i];
                 old_y_b = old_y;
                 old_x_b = old_x;
                 for(int i = 0; i <= 1; i++){
-                    while((new_rendered_map[old_y_b + pos_neg_one[i]][old_x_b] != '*') && (new_rendered_map[old_y_b + pos_neg_one[i]][old_x_b] != '#')){
-                        new_rendered_map[old_y_b + pos_neg_one[i]][old_x_b] = map_replace_character;
+                    while((new_map[old_y_b + pos_neg_one[i]][old_x_b] != '*') && (new_map[old_y_b + pos_neg_one[i]][old_x_b] != '#')){
+                        new_map[old_y_b + pos_neg_one[i]][old_x_b] = map_replace_character;
                         old_y_b = old_y_b + pos_neg_one[i];
                     }
                     old_y_b = old_y;
-                    while((new_rendered_map[old_y_b][old_x_b + pos_neg_one[i]] != '*') && (new_rendered_map[old_y_b][old_x_b + pos_neg_one[i]] != '#')){
-                        new_rendered_map[old_y_b][old_x_b + pos_neg_one[i]] = map_replace_character;
+                    while((new_map[old_y_b][old_x_b + pos_neg_one[i]] != '*') && (new_map[old_y_b][old_x_b + pos_neg_one[i]] != '#')){
+                        new_map[old_y_b][old_x_b + pos_neg_one[i]] = map_replace_character;
                         old_x_b = old_x_b + pos_neg_one[i];
                     }
                     old_y_b = old_y;
@@ -566,9 +575,10 @@ std::vector<std::string> toggle_hex_status(std::vector<std::string>  new_rendere
             }
         }
     }else{
-        player_replace_char = player.replace_character;
+        return_values.return_player_replace_character = player.replace_character;
     }
-    return new_rendered_map;
+    return_values.return_map = new_map;
+    return return_values;
 }
 
 //checks to see if player is trying to move out of the map
@@ -610,7 +620,6 @@ std::vector<std::string> initial_map_setup(player_struct player){
     }
 
     //print the pieces of the map until full
-    int x_b;
     int piece_number = 1;
     for(y = 1; y < 24; y++){
         switch(piece_number){
