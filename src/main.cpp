@@ -114,8 +114,7 @@ int main(int argc, char *argv[]){
     init_pair(3, COLOR_MAGENTA, COLOR_MAGENTA);
     init_pair(4, COLOR_WHITE, COLOR_WHITE);
     init_pair(5, COLOR_GREEN, COLOR_BLACK);
-    init_pair(6, COLOR_MAGENTA, COLOR_BLACK);
-    init_pair(7, COLOR_RED, COLOR_BLACK);
+    init_pair(6, COLOR_RED, COLOR_BLACK);
 
 
     //set initial position and initialize the player
@@ -170,6 +169,7 @@ int main(int argc, char *argv[]){
         timeout(100);
         switch(ch = getch()){
             //move up
+            case KEY_UP:
             case 'w':
                 player.replace_character_new = rendered_map[player.posy - 1][player.posx];
                 player.old_posx = player.posx;
@@ -186,6 +186,7 @@ int main(int argc, char *argv[]){
                 break;
 
             //move left
+            case KEY_LEFT:
             case 'a':
                 player.replace_character_new = rendered_map[player.posy][player.posx - 1];
                 player.old_posx = player.posx;
@@ -202,6 +203,7 @@ int main(int argc, char *argv[]){
                 break;
 
             //move down
+            case KEY_DOWN:
             case 's':
                 player.replace_character_new = rendered_map[player.posy + 1][player.posx];
                 player.old_posx = player.posx;
@@ -218,6 +220,7 @@ int main(int argc, char *argv[]){
                 break;
 
             //move right
+            case KEY_RIGHT:
             case 'd':
                 player.replace_character_new = rendered_map[player.posy][player.posx + 1];
                 player.old_posx = player.posx;
@@ -470,6 +473,9 @@ std::string view_menu(){
                 cur_item = choices[cur_item_num];
                 close_menu = true;
                 break;
+            case KEY_F(1):
+                close_menu = true;
+                break;
         }
         wrefresh(game_menu_window);
     }
@@ -517,7 +523,7 @@ void view_ants(ant_struct ant, int tick){
     first_ant_shown = 1;
 
     //scroll the window up and down when the appropriate key is pressed and print out the necessary lines.
-    while((ch_b = getch()) != 'q'){
+    while((ch_b = getch()) != KEY_F(2)){
         switch(ch_b){
             case KEY_DOWN:
                 if(last_ant_shown + 1 <= ant.number.back()){
@@ -714,18 +720,14 @@ void map_refresh(std::vector<std::string>  rendered_map){
                 attron(COLOR_PAIR(4));
                 mvaddch(y, x, rendered_map[y][x]);
                 attroff(COLOR_PAIR(4));
-            }else if(rendered_map[y][x] == 'e' || rendered_map[y][x] == 'l' || rendered_map[y][x] == 'p' || rendered_map[y][x] == 'a'){
+            }else if(rendered_map[y][x] == 'e' || rendered_map[y][x] == 'l' || rendered_map[y][x] == 'p' || rendered_map[y][x] == 'a' || rendered_map[y][x] == 'Q'){
                 attron(COLOR_PAIR(5));
                 mvaddch(y, x, rendered_map[y][x]);
                 attroff(COLOR_PAIR(5));
-            }else if(rendered_map[y][x] == 'Q'){
+            }else if(rendered_map[y][x] == ':'){
                 attron(COLOR_PAIR(6));
                 mvaddch(y, x, rendered_map[y][x]);
                 attroff(COLOR_PAIR(6));
-            }else if(rendered_map[y][x] == ':'){
-                attron(COLOR_PAIR(7));
-                mvaddch(y, x, rendered_map[y][x]);
-                attroff(COLOR_PAIR(7));
             }else{
                 mvaddch(y, x, rendered_map[y][x]);
             }
