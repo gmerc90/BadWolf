@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <fstream>
 #include "main.h"
 
 #define TERM_Y_SIZE 30
@@ -507,17 +508,14 @@ void view_ants(ant_struct ant, int tick){
     clear();
 }
 
-///FIXME to work with the new format
 //saves all the data from the game to a text file
 void save_game(std::vector<std::string>  rendered_map){
-    /*int x;
-    FILE * rendered_map_file;
-    rendered_map_file = fopen("map.txt", "w");
-    for(x = 0; x <= 24; x++){
-        fputs(rendered_map[x], rendered_map_file);
-        fputs("\n", rendered_map_file);
+    std::ofstream rendered_map_file("map.txt");
+    for(int y = 0; y <= 24; y++){
+        rendered_map_file << rendered_map.at(y);
+        rendered_map_file << '\n';
     }
-    fclose(rendered_map_file);*/
+    rendered_map_file.close();
 }
 
 //loads all data from a text file and puts it into the game
