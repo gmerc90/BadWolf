@@ -47,9 +47,16 @@ class main
             std::vector<bool> wings;
         };
 
+        struct move_ant_return{
+            ant_struct return_ant;
+            std::vector<std::string> return_map;
+        };
+
         int tick;
 
         std::vector<std::string>  rendered_map;
+
+        move_ant_return move_selected_ant(int selected_ant, ant_struct ant, player_struct player, std::vector<std::string> rendered_map);
 
     protected:
 

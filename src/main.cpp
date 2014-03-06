@@ -17,11 +17,10 @@
 #include <curses.h>
 #include <vector>
 #include <string>
+#include <fstream>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <fstream>
 #include "main.h"
 
 #define TERM_Y_SIZE 30
@@ -37,7 +36,6 @@ struct player_struct{
     char replace_character_new;
 };
 
-
 struct ant_struct{
     std::vector<int> number;
     std::vector<int> birth_tick;
@@ -46,15 +44,22 @@ struct ant_struct{
     std::vector<int> posx;
     std::vector<int> old_posy;
     std::vector<int> old_posx;
-    std::vector<char> holding;
-    std::vector<std::string> type;
-    std::vector<char> character;
     std::vector<bool> wings;
+    std::vector<char> holding;
+    std::vector<char> character;
+    std::vector<char> replace_character;
+    std::vector<char> replace_character_old;
+    std::vector<std::string> type;
 };
 
 struct toggle_hex_return{
     std::vector<std::string> return_map;
     char return_player_replace_character;
+};
+
+struct move_ant_return{
+    ant_struct return_ant;
+    std::vector<std::string> return_map;
 };
 
 bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player);
@@ -66,10 +71,11 @@ std::string view_menu();
 std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy);
 std::vector<std::string> initial_map_setup(player_struct player);
 
+move_ant_return move_selected_ant(int selected_ant, ant_struct ant, player_struct player, std::vector<std::string> rendered_map);
+
 toggle_hex_return toggle_hex_status(std::vector<std::string>  new_rendered_map, player_struct player);
 
 void map_refresh(std::vector<std::string>  rendered_map);
-void create_ant(int tick, ant_struct ant, player_struct player, std::vector<std::string>  rendered_map);
 void kill_ant();
 void view_ants(ant_struct ant, int tick);
 void save_game(std::vector<std::string>  rendered_map);
@@ -83,10 +89,13 @@ int main(int argc, char *argv[]){
     //initial basic declarations
     int ch, tick, vector_size, total_ants;
     int selected_ant = NULL;
+
     std::vector<std::string>  rendered_map, underground_map, surface_map;
     std::string chosen_menu_option;
     std::string current_map;
+
     toggle_hex_return toggle_hex_return_values;
+    move_ant_return move_ant_return_values;
 
     //standard starting stuff for Curses
     initscr();
@@ -134,6 +143,8 @@ int main(int argc, char *argv[]){
     ant.birth_tick.push_back(tick);
     ant.character.resize(1);
     ant.character.push_back('Q');
+    ant.replace_character.resize(1);
+    ant.replace_character.push_back(':');
     ant.type.resize(1);
     ant.type.push_back("Queen");
     ant.wings.resize(1);
@@ -231,6 +242,15 @@ int main(int argc, char *argv[]){
                 selected_ant = NULL;
                 break;
 
+            //move the selected ant to the location of the cursor
+            case 'm':
+                move_ant_return_values = move_selected_ant(selected_ant, ant, player, rendered_map);
+                rendered_map = move_ant_return_values.return_map;
+                ant = move_ant_return_values.return_ant;
+                player.replace_character = ant.character.at(selected_ant);
+                map_refresh(rendered_map);
+                break;
+
             //select a cell
             case 't':
                 toggle_hex_return_values = toggle_hex_status(rendered_map, player);
@@ -246,6 +266,7 @@ int main(int argc, char *argv[]){
                 ant.age.push_back(0);
                 ant.birth_tick.push_back(tick);
                 ant.character.push_back('e');
+                ant.replace_character.push_back(':');
                 ant.type.push_back("Egg");
                 ant.wings.push_back(false);
                 ant.posx.push_back(player.posx);
@@ -328,6 +349,29 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
+//takes the selected ant a moves it to the desired location.
+move_ant_return move_selected_ant(int selected_ant, ant_struct ant, player_struct player, std::vector<std::string> rendered_map){
+    //declare the initial values
+    int travel_y, travel_x;
+    move_ant_return return_data;
+
+    //find the difference in distance between the cursor and the ant
+    travel_y = player.posy - ant.posy.at(selected_ant);
+    travel_x = player.posx - ant.posx.at(selected_ant);
+
+    //move the ant the desired distance
+    rendered_map[ant.posy.at(selected_ant)][ant.posx.at(selected_ant)] = ant.replace_character.at(selected_ant);
+    ant.posy.at(selected_ant) = ant.posy.at(selected_ant) + travel_y;
+    ant.posx.at(selected_ant) = ant.posx.at(selected_ant) + travel_x;
+    ant.replace_character.at(selected_ant) = player.replace_character;
+    rendered_map[ant.posy.at(selected_ant)][ant.posx.at(selected_ant)] = ant.character.at(selected_ant);
+
+    //set the structure values to the appropriate values and then return them
+    return_data.return_map = rendered_map;
+    return_data.return_ant = ant;
+    return return_data;
+}
+
 //copy a map from one array to another
 std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy){
     std::vector<std::string> copied_map;
@@ -337,7 +381,6 @@ std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy){
     }
     return copied_map;
 }
-
 
 //select an ant to give commands to
 int select_ant(ant_struct ant, player_struct player){
@@ -680,9 +723,9 @@ void map_refresh(std::vector<std::string>  rendered_map){
                 mvaddch(y, x, rendered_map[y][x]);
                 attroff(COLOR_PAIR(6));
             }else if(rendered_map[y][x] == ':'){
-                    attron(COLOR_PAIR(7));
-                    mvaddch(y, x, rendered_map[y][x]);
-                    attroff(COLOR_PAIR(7));
+                attron(COLOR_PAIR(7));
+                mvaddch(y, x, rendered_map[y][x]);
+                attroff(COLOR_PAIR(7));
             }else{
                 mvaddch(y, x, rendered_map[y][x]);
             }
