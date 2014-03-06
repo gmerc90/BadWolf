@@ -60,6 +60,7 @@ struct toggle_hex_return{
 struct move_ant_return{
     ant_struct return_ant;
     std::vector<std::string> return_map;
+    char returnPlayerReplaceChar;
 };
 
 bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player);
@@ -250,7 +251,7 @@ int main(int argc, char *argv[]){
                 move_ant_return_values = move_selected_ant(selected_ant, ant, player, rendered_map);
                 rendered_map = move_ant_return_values.return_map;
                 ant = move_ant_return_values.return_ant;
-                player.replace_character = ant.character.at(selected_ant);
+                player.replace_character = move_ant_return_values.returnPlayerReplaceChar;
                 map_refresh(rendered_map);
                 break;
 
@@ -353,26 +354,34 @@ int main(int argc, char *argv[]){
 }
 
 //takes the selected ant a moves it to the desired location.
-move_ant_return move_selected_ant(int selected_ant, ant_struct ant, player_struct player, std::vector<std::string> rendered_map){
+move_ant_return move_selected_ant(int selectedAnt, ant_struct ant, player_struct player, std::vector<std::string> renderedMap){
     //declare the initial values
-    int travel_y, travel_x;
-    move_ant_return return_data;
+    int travelY, travelX;
+    char playerReplaceChar = player.replace_character;
+    move_ant_return returnData;
 
-    //find the difference in distance between the cursor and the ant
-    travel_y = player.posy - ant.posy.at(selected_ant);
-    travel_x = player.posx - ant.posx.at(selected_ant);
+    //check to see if an ant is selected
+    if(selectedAnt != NULL){
 
-    //move the ant the desired distance
-    rendered_map[ant.posy.at(selected_ant)][ant.posx.at(selected_ant)] = ant.replace_character.at(selected_ant);
-    ant.posy.at(selected_ant) = ant.posy.at(selected_ant) + travel_y;
-    ant.posx.at(selected_ant) = ant.posx.at(selected_ant) + travel_x;
-    ant.replace_character.at(selected_ant) = player.replace_character;
-    rendered_map[ant.posy.at(selected_ant)][ant.posx.at(selected_ant)] = ant.character.at(selected_ant);
+        //find the difference in distance between the cursor and the ant
+        travelY = player.posy - ant.posy.at(selectedAnt);
+        travelX = player.posx - ant.posx.at(selectedAnt);
 
+        //move the ant the desired distance
+        if(player.replace_character != '*'){
+            renderedMap[ant.posy.at(selectedAnt)][ant.posx.at(selectedAnt)] = ant.replace_character.at(selectedAnt);
+            ant.posy.at(selectedAnt) = ant.posy.at(selectedAnt) + travelY;
+            ant.posx.at(selectedAnt) = ant.posx.at(selectedAnt) + travelX;
+            ant.replace_character.at(selectedAnt) = player.replace_character;
+            renderedMap[ant.posy.at(selectedAnt)][ant.posx.at(selectedAnt)] = ant.character.at(selectedAnt);
+            playerReplaceChar = ant.character.at(selectedAnt);
+        }
+    }
     //set the structure values to the appropriate values and then return them
-    return_data.return_map = rendered_map;
-    return_data.return_ant = ant;
-    return return_data;
+    returnData.returnPlayerReplaceChar = playerReplaceChar;
+    returnData.return_map = renderedMap;
+    returnData.return_ant = ant;
+    return returnData;
 }
 
 //copy a map from one array to another
@@ -585,9 +594,9 @@ toggle_hex_return toggle_hex_status(std::vector<std::string>  new_map, player_st
     //check to find out what to replace spaces with and if the player is on a * spot.
     if(player.replace_character != '*'){
         if(player.replace_character == ':'){
-            map_replace_character = '.';
-            return_values.return_player_replace_character = '.';
-        }else if(player.replace_character == '.'){
+            map_replace_character = ' ';
+            return_values.return_player_replace_character = ' ';
+        }else if(player.replace_character == ' '){
             map_replace_character = ':';
             return_values.return_player_replace_character = ':';
         }
