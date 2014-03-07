@@ -22,69 +22,63 @@ class main
 {
     public:
 
-        struct player_struct{
-            int posy;
-            int posx;
-            int old_posy;
-            int old_posx;
-
-            char player_character = '@';
-            char replace_character;
-            char replace_character_new;
+        struct cursorStruct{
+            int posY;
+            int posX;
         };
 
-        struct ant_struct{
+        struct antStruct{
             std::vector<int> number;
-            std::vector<int> birth_tick;
+            std::vector<int> birthTick;
             std::vector<int> age;
-            std::vector<int> posy;
-            std::vector<int> posx;
-            std::vector<int> old_posy;
-            std::vector<int> old_posx;
-            std::vector<char> holding;
-            std::vector<std::string> type;
-            std::vector<char> character;
+            std::vector<int> posY;
+            std::vector<int> posX;
+            std::vector<int> oldPosY;
+            std::vector<int> oldPosX;
             std::vector<bool> wings;
+            std::vector<char> holding;
+            std::vector<char> character;
+            std::vector<char> replaceCharacter;
+            std::vector<char> replaceCharacterOld;
+            std::vector<std::string> type;
         };
 
-        struct move_ant_return{
-            ant_struct return_ant;
-            std::vector<std::string> return_map;
+        struct moveAntReturn{
+            antStruct returnAnt;
+            std::vector<std::string> returnMap;
         };
 
-        int tick;
+        int tick, selectedAnt;
 
-        std::vector<std::string>  rendered_map;
+        std::vector<std::string>  renderedMap, undergroundMap, surfaceMap;
 
-        move_ant_return move_selected_ant(int selected_ant, ant_struct ant, player_struct player, std::vector<std::string> rendered_map);
+        moveAntReturn moveSelectedAnt(int selected_ant, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap);
 
     protected:
 
     private:
 
-        struct toggle_hex_return{
-            std::vector<std::string> return_map;
-            char return_player_replace_character;
-        };
+        int ch, vectorSize, totalAnts;
 
-        int ch, total_ants;
+        bool checkForEdge(std::vector<std::string>  renderedMap, cursorStruct cursor);
 
-        bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player);
+        moveAntReturn moveAntReturnValues;
 
-        int select_ant(ant_struct ant, player_struct player);
+        std::string chosenMenuOption, currentMap;
 
-        std::string view_menu();
+        int selectAnt(antStruct ant, cursorStruct cursor);
 
-        std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy);
-        std::vector<std::string> initial_map_setup(player_struct player);
+        std::string viewMenu();
 
-        toggle_hex_return toggle_hex_status(std::vector<std::string>  new_rendered_map, player_struct player);
+        std::vector<std::string> copyMap(std::vector<std::string>  mapToCopy);
+        std::vector<std::string> initialMapSetup(cursorStruct cursor);
+        std::vector<std::string> toggleHexStatus(std::vector<std::string>  newMap, cursorStruct cursor);
 
-        void map_refresh(std::vector<std::string>  rendered_map);
-        void kill_ant();
-        void view_ants(ant_struct ant, int tick);
-        void save_game(std::vector<std::string>  rendered_map);
-        void load_game();
+        void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
+        void killAnt();
+        void viewAnts(antStruct ant, int tick);
+        void saveGame(std::vector<std::string>  renderedMap);
+        void loadGame();
 
 
 

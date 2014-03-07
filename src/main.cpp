@@ -26,61 +26,50 @@
 #define TERM_Y_SIZE 30
 #define TERM_X_SIZE 80
 
-struct player_struct{
-    int posy;
-    int posx;
-    int old_posy;
-    int old_posx;
-    char player_character = '@';
-    char replace_character;
-    char replace_character_new;
+struct cursorStruct{
+    int posY;
+    int posX;
 };
 
-struct ant_struct{
+struct antStruct{
     std::vector<int> number;
-    std::vector<int> birth_tick;
+    std::vector<int> birthTick;
     std::vector<int> age;
-    std::vector<int> posy;
-    std::vector<int> posx;
-    std::vector<int> old_posy;
-    std::vector<int> old_posx;
+    std::vector<int> posY;
+    std::vector<int> posX;
+    std::vector<int> oldPosY;
+    std::vector<int> oldPosX;
     std::vector<bool> wings;
     std::vector<char> holding;
     std::vector<char> character;
-    std::vector<char> replace_character;
-    std::vector<char> replace_character_old;
+    std::vector<char> replaceCharacter;
+    std::vector<char> replaceCharacterOld;
     std::vector<std::string> type;
 };
 
-struct toggle_hex_return{
-    std::vector<std::string> return_map;
-    char return_player_replace_character;
+struct moveAntReturn{
+    antStruct returnAnt;
+    std::vector<std::string> returnMap;
 };
 
-struct move_ant_return{
-    ant_struct return_ant;
-    std::vector<std::string> return_map;
-    char returnPlayerReplaceChar;
-};
+bool checkForEdge(std::vector<std::string>  renderedMap, cursorStruct cursor);
 
-bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player);
+int selectAnt(antStruct ant, cursorStruct cursor);
 
-int select_ant(ant_struct ant, player_struct player);
+std::string viewMenu();
 
-std::string view_menu();
+std::vector<std::string> copyMap(std::vector<std::string>  mapToCopy);
+std::vector<std::string> initialMapSetup(cursorStruct cursor);
 
-std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy);
-std::vector<std::string> initial_map_setup(player_struct player);
+moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap);
 
-move_ant_return move_selected_ant(int selected_ant, ant_struct ant, player_struct player, std::vector<std::string> rendered_map);
+std::vector<std::string> toggleHexStatus(std::vector<std::string>  newMap, cursorStruct cursor);
 
-toggle_hex_return toggle_hex_status(std::vector<std::string>  new_rendered_map, player_struct player);
-
-void map_refresh(std::vector<std::string>  rendered_map);
-void kill_ant();
-void view_ants(ant_struct ant, int tick);
-void save_game(std::vector<std::string>  rendered_map);
-void load_game(std::vector<std::string>  rendered_map);
+void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
+void killAnt();
+void viewAnts(antStruct ant, int tick);
+void saveGame(std::vector<std::string>  renderedMap);
+void loadGame();
 
 int main(int argc, char *argv[]){
 
@@ -88,15 +77,13 @@ int main(int argc, char *argv[]){
     srand(time(NULL));
 
     //initial basic declarations
-    int ch, tick, vector_size, total_ants;
-    int selected_ant = NULL;
+    int ch, tick, vectorSize, totalAnts;
+    int selectedAnt = NULL;
 
-    std::vector<std::string>  rendered_map, underground_map, surface_map;
-    std::string chosen_menu_option;
-    std::string current_map;
+    std::vector<std::string>  renderedMap, undergroundMap, surfaceMap;
+    std::string chosenMenuOption, currentMap;
 
-    toggle_hex_return toggle_hex_return_values;
-    move_ant_return move_ant_return_values;
+    moveAntReturn moveAntReturnValues;
 
     //standard starting stuff for Curses
     initscr();
@@ -111,57 +98,56 @@ int main(int argc, char *argv[]){
 
     //color initialization
     init_pair(1, COLOR_RED, COLOR_RED);
-    init_pair(2, COLOR_YELLOW, COLOR_YELLOW);
+    init_pair(2, COLOR_WHITE, COLOR_YELLOW);
     init_pair(3, COLOR_MAGENTA, COLOR_MAGENTA);
     init_pair(4, COLOR_WHITE, COLOR_WHITE);
     init_pair(5, COLOR_GREEN, COLOR_BLACK);
     init_pair(6, COLOR_RED, COLOR_BLACK);
 
 
-    //set initial position and initialize the player
-    player_struct player;
-    player.posy = (LINES - 5)/2;
-    player.posx = COLS/2;
-    player.replace_character = ':';
+    //set initial position and initialize the cursor
+    cursorStruct cursor;
+    cursor.posY = (LINES - 5)/2;
+    cursor.posX = COLS/2;
 
     //show initial map
-    rendered_map = initial_map_setup(player);
-    map_refresh(rendered_map);
-    //underground_map = copy_map(rendered_map);
-    current_map = "underground";
+    renderedMap = initialMapSetup(cursor);
+    refreshMap(renderedMap, cursor);
+    //undergroundMap = copyMap(renderedMap);
+    currentMap = "underground";
 
     //set initial tick value
     tick = 0;
 
     //creates the initial ant structure and the queen
-    ant_struct ant;
+    antStruct ant;
     ant.number.resize(1);
     ant.number.push_back(1);
     ant.age.resize(1);
     ant.age.push_back(0);
-    ant.birth_tick.resize(1);
-    ant.birth_tick.push_back(tick);
+    ant.birthTick.resize(1);
+    ant.birthTick.push_back(tick);
     ant.character.resize(1);
     ant.character.push_back('Q');
-    ant.replace_character.resize(1);
-    ant.replace_character.push_back(':');
+    ant.replaceCharacter.resize(1);
+    ant.replaceCharacter.push_back(':');
     ant.type.resize(1);
     ant.type.push_back("Queen");
     ant.wings.resize(1);
     ant.wings.push_back(true);
-    ant.posx.resize(1);
-    ant.posx.push_back(player.posx);
-    ant.posy.resize(1);
-    if(rendered_map[player.posy - 1][player.posx] != '*'){
-        ant.posy.push_back(player.posy - 1);
+    ant.posX.resize(1);
+    ant.posX.push_back(cursor.posX);
+    ant.posY.resize(1);
+    if(renderedMap[cursor.posY - 1][cursor.posX] != '*'){
+        ant.posY.push_back(cursor.posY - 1);
     }else{
-        ant.posy.push_back(player.posy - 2);
+        ant.posY.push_back(cursor.posY - 2);
     }
-    rendered_map[ant.posy.at(1)][ant.posx.at(1)] = ant.character.at(1);
-    map_refresh(rendered_map);
+    renderedMap[ant.posY.at(1)][ant.posX.at(1)] = ant.character.at(1);
+    refreshMap(renderedMap, cursor);
 
     //main game loop
-    while(chosen_menu_option != "Quit"){
+    while(chosenMenuOption != "Quit"){
 
         /*checks to see if a key was pressed,
         if one has been, it performs the necessary code to
@@ -172,149 +158,118 @@ int main(int argc, char *argv[]){
             //move up
             case KEY_UP:
             case 'w':
-                player.replace_character_new = rendered_map[player.posy - 1][player.posx];
-                player.old_posx = player.posx;
-                player.old_posy = player.posy;
-                player.posy = player.posy - 1;
-                if(check_for_edge(rendered_map, player) == false){
-                    rendered_map[player.old_posy][player.old_posx] = player.replace_character;
-                    rendered_map[player.posy][player.posx] = player.player_character;
-                    player.replace_character = player.replace_character_new;
-                }else{
-                    player.posy = player.posy + 1;
+                cursor.posY = cursor.posY - 1;
+                if(checkForEdge(renderedMap, cursor) != false){
+                    cursor.posY = cursor.posY + 1;
                 }
-                map_refresh(rendered_map);
+                refreshMap(renderedMap, cursor);
                 break;
 
             //move left
             case KEY_LEFT:
             case 'a':
-                player.replace_character_new = rendered_map[player.posy][player.posx - 1];
-                player.old_posx = player.posx;
-                player.old_posy = player.posy;
-                player.posx = player.posx - 1;
-                if(check_for_edge(rendered_map, player) == false){
-                    rendered_map[player.old_posy][player.old_posx] = player.replace_character;
-                    rendered_map[player.posy][player.posx] = player.player_character;
-                    player.replace_character = player.replace_character_new;
-                }else{
-                    player.posx = player.posx + 1;
+                cursor.posX = cursor.posX - 1;
+                if(checkForEdge(renderedMap, cursor) != false){
+                    cursor.posX = cursor.posX + 1;
                 }
-                map_refresh(rendered_map);
+                refreshMap(renderedMap, cursor);
                 break;
 
             //move down
             case KEY_DOWN:
             case 's':
-                player.replace_character_new = rendered_map[player.posy + 1][player.posx];
-                player.old_posx = player.posx;
-                player.old_posy = player.posy;
-                player.posy = player.posy + 1;
-                if(check_for_edge(rendered_map, player) == false){
-                    rendered_map[player.old_posy][player.old_posx] = player.replace_character;
-                    rendered_map[player.posy][player.posx] = player.player_character;
-                    player.replace_character = player.replace_character_new;
-                }else{
-                    player.posy = player.posy - 1;
+                cursor.posY = cursor.posY + 1;
+                if(checkForEdge(renderedMap, cursor) != false){
+                    cursor.posY = cursor.posY -1;
                 }
-                map_refresh(rendered_map);
+                refreshMap(renderedMap, cursor);
                 break;
 
             //move right
             case KEY_RIGHT:
             case 'd':
-                player.replace_character_new = rendered_map[player.posy][player.posx + 1];
-                player.old_posx = player.posx;
-                player.old_posy = player.posy;
-                player.posx = player.posx + 1;
-                if(check_for_edge(rendered_map, player) == false){
-                    rendered_map[player.old_posy][player.old_posx] = player.replace_character;
-                    rendered_map[player.posy][player.posx] = player.player_character;
-                    player.replace_character = player.replace_character_new;
-                }else{
-                    player.posx = player.posx - 1;
+                cursor.posX = cursor.posX + 1;
+                if(checkForEdge(renderedMap, cursor) != false){
+                    cursor.posX = cursor.posX - 1;
                 }
-                map_refresh(rendered_map);
+                refreshMap(renderedMap, cursor);
                 break;
 
             //select an ant
             case 'e':
-                selected_ant = select_ant(ant, player);
+                selectedAnt = selectAnt(ant, cursor);
                 break;
             //clear selected ant with Shift + e
             case 'E':
-                selected_ant = NULL;
+                selectedAnt = NULL;
                 break;
 
             //move the selected ant to the location of the cursor
             case 'm':
-                move_ant_return_values = move_selected_ant(selected_ant, ant, player, rendered_map);
-                rendered_map = move_ant_return_values.return_map;
-                ant = move_ant_return_values.return_ant;
-                player.replace_character = move_ant_return_values.returnPlayerReplaceChar;
-                map_refresh(rendered_map);
+                moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, renderedMap);
+                renderedMap = moveAntReturnValues.returnMap;
+                ant = moveAntReturnValues.returnAnt;
+                refreshMap(renderedMap, cursor);
                 break;
 
             //select a cell
             case 't':
-                toggle_hex_return_values = toggle_hex_status(rendered_map, player);
-                rendered_map = toggle_hex_return_values.return_map;
-                player.replace_character = toggle_hex_return_values.return_player_replace_character;
-                map_refresh(rendered_map);
+                renderedMap = toggleHexStatus(renderedMap, cursor);
+                refreshMap(renderedMap, cursor);
                 break;
 
             //create ants with their initial value
             case 'c':
-                vector_size = ant.number.back() + 1;
-                ant.number.push_back(vector_size);
+                vectorSize = ant.number.back() + 1;
+                ant.number.push_back(vectorSize);
                 ant.age.push_back(0);
-                ant.birth_tick.push_back(tick);
+                ant.birthTick.push_back(tick);
                 ant.character.push_back('e');
-                ant.replace_character.push_back(':');
+                ant.replaceCharacter.push_back(':');
                 ant.type.push_back("Egg");
                 ant.wings.push_back(false);
-                ant.posx.push_back(player.posx);
-                if(rendered_map[player.posy + 1][player.posx] != '*'){
-                    ant.posy.push_back(player.posy + 1);
+                ant.posX.push_back(cursor.posX);
+                if(renderedMap[cursor.posY + 1][cursor.posX] != '*'){
+                    ant.posY.push_back(cursor.posY + 1);
                 }else{
-                    ant.posy.push_back(player.posy + 2);
+                    ant.posY.push_back(cursor.posY + 2);
                 }
-                rendered_map[ant.posy.at(vector_size)][ant.posx.at(vector_size)] = ant.character.at(vector_size);
+                renderedMap[ant.posY.at(vectorSize)][ant.posX.at(vectorSize)] = ant.character.at(vectorSize);
                 mvprintw(24, 3, "%d", ant.number.size());
-                map_refresh(rendered_map);
+                refreshMap(renderedMap, cursor);
                 break;
 
             //bring up game menu
             case KEY_F(1):
-                chosen_menu_option = view_menu();
-                map_refresh(rendered_map);
+                chosenMenuOption = viewMenu();
+                refreshMap(renderedMap, cursor);
                 //take the appropriate actions for the chosen menu option.
-                if(chosen_menu_option == "Save"){
-                    save_game(rendered_map);
-                    chosen_menu_option = " ";
-                }else if(chosen_menu_option =="Load"){
-                    load_game(rendered_map);
-                    chosen_menu_option = " ";
-                }else if(chosen_menu_option == "Close"){
-                    chosen_menu_option = " ";
+                if(chosenMenuOption == "Save"){
+                    saveGame(renderedMap);
+                    chosenMenuOption = " ";
+                }else if(chosenMenuOption =="Load"){
+                    loadGame();
+                    chosenMenuOption = " ";
+                }else if(chosenMenuOption == "Close"){
+                    chosenMenuOption = " ";
                 }
                 break;
 
             //view ants window
             case KEY_F(2):
-                view_ants(ant, tick);
-                map_refresh(rendered_map);
+                viewAnts(ant, tick);
+                refreshMap(renderedMap, cursor);
                 break;
         }
         //tick the game
         tick = tick + 1;
 
         //after each tick updates the age of the ant then grows it if necessary
-        total_ants = ant.number.back();
-        for(int i = 1; i <= total_ants; i++){
-            ant.age.at(i) = tick - ant.birth_tick.at(i);
+        totalAnts = ant.number.back();
+        for(int i = 1; i <= totalAnts; i++){
+            ant.age.at(i) = tick - ant.birthTick.at(i);
         }
-        for(int i = 1; i <= total_ants; i++){
+        for(int i = 1; i <= totalAnts; i++){
             if(ant.type.at(i) != "Queen"){
                 switch(ant.age.at(i)){
                     case 50:
@@ -332,16 +287,16 @@ int main(int argc, char *argv[]){
                     default:
                         break;
                 }
-                rendered_map[ant.posy.at(i)][ant.posx.at(i)] = ant.character.at(i);
+                renderedMap[ant.posY.at(i)][ant.posX.at(i)] = ant.character.at(i);
             }
         }
-        map_refresh(rendered_map);
+        refreshMap(renderedMap, cursor);
 
         //show selected ant information
-        if(selected_ant != NULL){
+        if(selectedAnt != NULL){
             move(26, 0);
             clrtoeol();
-            mvprintw(26, 1, "Number: %d | Type: %s | Age: %d", ant.number.at(selected_ant), ant.type.at(selected_ant).c_str(), ant.age.at(selected_ant));
+            mvprintw(26, 1, "Number: %d | Type: %s | Age: %d", ant.number.at(selectedAnt), ant.type.at(selectedAnt).c_str(), ant.age.at(selectedAnt));
         }else{
             move(26, 0);
             clrtoeol();
@@ -354,251 +309,244 @@ int main(int argc, char *argv[]){
 }
 
 //takes the selected ant a moves it to the desired location.
-move_ant_return move_selected_ant(int selectedAnt, ant_struct ant, player_struct player, std::vector<std::string> renderedMap){
+moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap){
     //declare the initial values
     int travelY, travelX;
-    char playerReplaceChar = player.replace_character;
-    move_ant_return returnData;
+    moveAntReturn returnData;
 
     //check to see if an ant is selected
     if(selectedAnt != NULL){
 
         //find the difference in distance between the cursor and the ant
-        travelY = player.posy - ant.posy.at(selectedAnt);
-        travelX = player.posx - ant.posx.at(selectedAnt);
+        travelY = cursor.posY - ant.posY.at(selectedAnt);
+        travelX = cursor.posX - ant.posX.at(selectedAnt);
 
         //move the ant the desired distance
-        if(player.replace_character != '*'){
-            renderedMap[ant.posy.at(selectedAnt)][ant.posx.at(selectedAnt)] = ant.replace_character.at(selectedAnt);
-            ant.posy.at(selectedAnt) = ant.posy.at(selectedAnt) + travelY;
-            ant.posx.at(selectedAnt) = ant.posx.at(selectedAnt) + travelX;
-            ant.replace_character.at(selectedAnt) = player.replace_character;
-            renderedMap[ant.posy.at(selectedAnt)][ant.posx.at(selectedAnt)] = ant.character.at(selectedAnt);
-            playerReplaceChar = ant.character.at(selectedAnt);
+        if(renderedMap[cursor.posY][cursor.posX] != '*'){
+            renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.replaceCharacter.at(selectedAnt);
+            ant.posY.at(selectedAnt) = ant.posY.at(selectedAnt) + travelY;
+            ant.posX.at(selectedAnt) = ant.posX.at(selectedAnt) + travelX;
+            renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.character.at(selectedAnt);
         }
     }
     //set the structure values to the appropriate values and then return them
-    returnData.returnPlayerReplaceChar = playerReplaceChar;
-    returnData.return_map = renderedMap;
-    returnData.return_ant = ant;
+    returnData.returnMap = renderedMap;
+    returnData.returnAnt = ant;
     return returnData;
 }
 
 //copy a map from one array to another
-std::vector<std::string> copy_map(std::vector<std::string>  map_to_copy){
-    std::vector<std::string> copied_map;
+std::vector<std::string> copyMap(std::vector<std::string>  mapToCopy){
+    std::vector<std::string> copiedMap;
     for(int y = 0; y <= 24; y++){
         for(int x = 0; x <= 80; x++)
-            copied_map[y][x] = map_to_copy[y][x];
+            copiedMap[y][x] = mapToCopy[y][x];
     }
-    return copied_map;
+    return copiedMap;
 }
 
 //select an ant to give commands to
-int select_ant(ant_struct ant, player_struct player){
+int selectAnt(antStruct ant, cursorStruct cursor){
     //declaring variables
-    int selected_ant, total_ants;
+    int selectedAnt, totalAnts;
 
-    //check all the ants until it finds one that matches the player coordinates
-    total_ants = ant.number.back();
-    for(int i = 0; i <= total_ants; i++){
-        if((ant.posy[i] == player.posy) && (ant.posx[i] == player.posx)){
-            selected_ant = i;
+    //check all the ants until it finds one that matches the cursor coordinates
+    totalAnts = ant.number.back();
+    for(int i = 0; i <= totalAnts; i++){
+        if((ant.posY[i] == cursor.posY) && (ant.posX[i] == cursor.posX)){
+            selectedAnt = i;
             break;
         }else{
-            selected_ant = NULL;
+            selectedAnt = NULL;
         }
     }
-    return selected_ant;
+    return selectedAnt;
 }
 
 //create a menu where you will be able to choose quit, save, and load options
-std::string view_menu(){
+std::string viewMenu(){
     //function variable declarations
     char *choices[] = {"Save", "Load", "Quit", "Close"};
-    char *menu_title = "Game Menu";
-    int ch_b, height, width, wind_y, wind_x, title_x, menu_item_x, menu_item_y, cur_item_y, cur_item_num;
-    bool close_menu = false;
-    std::string cur_item;
-    WINDOW *game_menu_window;
+    char *menuTitle = "Game Menu";
+    int ch, height, width, windY, windX, titleX, menuItemX, menuItemY, curItemY, curItemNum;
+    bool closeMenu = false;
+    std::string curItem;
+    WINDOW *gameMenuWindow;
 
     //set window values
     height = 10;
     width = 20;
-    wind_y = ((LINES - 5) - height) / 2;
-    wind_x = (COLS - width) / 2;
+    windY = ((LINES - 5) - height) / 2;
+    windX = (COLS - width) / 2;
 
     //create menu window and subwindow
-    game_menu_window = newwin(height, width, wind_y, wind_x);
-    keypad(game_menu_window, TRUE);
-    wrefresh(game_menu_window);
+    gameMenuWindow = newwin(height, width, windY, windX);
+    keypad(gameMenuWindow, TRUE);
+    wrefresh(gameMenuWindow);
 
     //print window border, menu title, and menu options.
-    title_x = (width - strlen(menu_title)) / 2;
-    box(game_menu_window, 0, 0);
-    wattron(game_menu_window, A_BOLD);
-    mvwprintw(game_menu_window, 1, title_x, menu_title);
-    wattroff(game_menu_window, A_BOLD);
-    menu_item_y = 3;
-    menu_item_x = (width - strlen(choices[0])) / 2;
-    mvwprintw(game_menu_window, menu_item_y, menu_item_x, "%s<", choices[0]);
-    cur_item_y = menu_item_y;
-    cur_item_num = 0;
-    menu_item_y = 4;
+    titleX = (width - strlen(menuTitle)) / 2;
+    box(gameMenuWindow, 0, 0);
+    wattron(gameMenuWindow, A_BOLD);
+    mvwprintw(gameMenuWindow, 1, titleX, menuTitle);
+    wattroff(gameMenuWindow, A_BOLD);
+    menuItemY = 3;
+    menuItemX = (width - strlen(choices[0])) / 2;
+    mvwprintw(gameMenuWindow, menuItemY, menuItemX, "%s<", choices[0]);
+    curItemY = menuItemY;
+    curItemNum = 0;
+    menuItemY = 4;
     for(int i = 1; i <= 3; i++){
-        menu_item_x = (width - strlen(choices[i])) / 2;
-        mvwprintw(game_menu_window, menu_item_y, menu_item_x, choices[i]);
-        menu_item_y = menu_item_y + 1;
+        menuItemX = (width - strlen(choices[i])) / 2;
+        mvwprintw(gameMenuWindow, menuItemY, menuItemX, choices[i]);
+        menuItemY = menuItemY + 1;
     }
-    wrefresh(game_menu_window);
+    wrefresh(gameMenuWindow);
 
     //main menu loop.
-    while(close_menu != true){
-        switch(ch_b = getch()){
+    while(closeMenu != true){
+        switch(ch = getch()){
             case KEY_DOWN:
-                if(cur_item_num + 1 <= 3){
-                    wmove(game_menu_window, cur_item_y, 0);
-                    wclrtoeol(game_menu_window);
-                    mvwprintw(game_menu_window, cur_item_y, ((width - strlen(choices[cur_item_num])) / 2), choices[cur_item_num]);
-                    cur_item_num = cur_item_num + 1;
-                    cur_item_y = cur_item_y + 1;
-                    mvwprintw(game_menu_window, cur_item_y, ((width - strlen(choices[cur_item_num])) / 2), "%s<", choices[cur_item_num]);
-                    box(game_menu_window, 0, 0);
+                if(curItemNum + 1 <= 3){
+                    wmove(gameMenuWindow, curItemY, 0);
+                    wclrtoeol(gameMenuWindow);
+                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2), choices[curItemNum]);
+                    curItemNum = curItemNum + 1;
+                    curItemY = curItemY + 1;
+                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2), "%s<", choices[curItemNum]);
+                    box(gameMenuWindow, 0, 0);
                 }
                 break;
             case KEY_UP:
-                if(cur_item_num - 1 >= 0){
-                    wmove(game_menu_window, cur_item_y, 0);
-                    wclrtoeol(game_menu_window);
-                    mvwprintw(game_menu_window, cur_item_y, ((width - strlen(choices[cur_item_num])) / 2), choices[cur_item_num]);
-                    cur_item_num = cur_item_num - 1;
-                    cur_item_y = cur_item_y - 1;
-                    mvwprintw(game_menu_window, cur_item_y, ((width - strlen(choices[cur_item_num])) / 2), "%s<", choices[cur_item_num]);
-                    box(game_menu_window, 0, 0);
+                if(curItemNum - 1 >= 0){
+                    wmove(gameMenuWindow, curItemY, 0);
+                    wclrtoeol(gameMenuWindow);
+                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2), choices[curItemNum]);
+                    curItemNum = curItemNum - 1;
+                    curItemY = curItemY - 1;
+                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2), "%s<", choices[curItemNum]);
+                    box(gameMenuWindow, 0, 0);
                 }
                 break;
             //enter key
             case 10:
-                cur_item = choices[cur_item_num];
-                close_menu = true;
+                curItem = choices[curItemNum];
+                closeMenu = true;
                 break;
             case KEY_F(1):
-                close_menu = true;
+                closeMenu = true;
                 break;
         }
-        wrefresh(game_menu_window);
+        wrefresh(gameMenuWindow);
     }
     //cleanup before quit and returns the selected option to the main function
-    delwin(game_menu_window);
+    delwin(gameMenuWindow);
     clear();
-    return cur_item;
+    return curItem;
 }
 
 //if needed, kill the ant
-void kill_ant(){
+void killAnt(){
     ///TODO make kill the ant if needed
 }
 
 //view a list of all ants when tab is pressed, alive and dead, and are able to filter the list.
-void view_ants(ant_struct ant, int tick){
+void viewAnts(antStruct ant, int tick){
     //declaring function variables
-    WINDOW *view_ants_wind;
-    int height, width, wind_y, wind_x, ch_b, total_ants, last_ant_shown, first_ant_shown;
+    WINDOW *viewAntsWind;
+    int height, width, windY, windX, ch, totalAnts, lastAntShown, firstAntShown;
 
     //ant window variable default values
     height = 20;
     width = 60;
-    wind_y = ((LINES - 5) - height) / 2;
-    wind_x = (COLS - width) / 2;
-    total_ants = ant.number.back();
+    windY = ((LINES - 5) - height) / 2;
+    windX = (COLS - width) / 2;
+    totalAnts = ant.number.back();
 
     //creates the view ants window
-    view_ants_wind = newwin(height, width, wind_y, wind_x);
-    box(view_ants_wind, 0, 0);
-    scrollok(view_ants_wind, TRUE);
-    wrefresh(view_ants_wind);
+    viewAntsWind = newwin(height, width, windY, windX);
+    box(viewAntsWind, 0, 0);
+    scrollok(viewAntsWind, TRUE);
+    wrefresh(viewAntsWind);
 
     //checks to see if the first ant has been created, if it has been they will be printed out.
     int y = 1;
-    for(int i = 1; i <= total_ants; i++){
+    for(int i = 1; i <= totalAnts; i++){
         if(y > 18){
             break;
         }
-        mvwprintw(view_ants_wind, y, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(i), ant.age.at(i), ant.type.at(i).c_str());
+        mvwprintw(viewAntsWind, y, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(i), ant.age.at(i), ant.type.at(i).c_str());
         y = y + 1;
-        last_ant_shown = i;
+        lastAntShown = i;
     }
-    wrefresh(view_ants_wind);
-    first_ant_shown = 1;
+    wrefresh(viewAntsWind);
+    firstAntShown = 1;
 
     //scroll the window up and down when the appropriate key is pressed and print out the necessary lines.
-    while((ch_b = getch()) != KEY_F(2)){
-        switch(ch_b){
+    while((ch = getch()) != KEY_F(2)){
+        switch(ch){
             case KEY_DOWN:
-                if(last_ant_shown + 1 <= ant.number.back()){
-                    last_ant_shown = last_ant_shown + 1;
-                    first_ant_shown = first_ant_shown + 1;
-                    wborder(view_ants_wind, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-                    wrefresh(view_ants_wind);
-                    wscrl(view_ants_wind, 1);
-                    box(view_ants_wind, 0, 0);
-                    mvwprintw(view_ants_wind, 18, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(last_ant_shown),
-                              ant.age.at(last_ant_shown), ant.type.at(last_ant_shown).c_str());
-                    wrefresh(view_ants_wind);
+                if(lastAntShown + 1 <= ant.number.back()){
+                    lastAntShown = lastAntShown + 1;
+                    firstAntShown = firstAntShown + 1;
+                    wborder(viewAntsWind, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+                    wrefresh(viewAntsWind);
+                    wscrl(viewAntsWind, 1);
+                    box(viewAntsWind, 0, 0);
+                    mvwprintw(viewAntsWind, 18, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(lastAntShown),
+                              ant.age.at(lastAntShown), ant.type.at(lastAntShown).c_str());
+                    wrefresh(viewAntsWind);
                 }
                 break;
             case KEY_UP:
-                if(first_ant_shown - 1 >= 1){
-                    last_ant_shown = last_ant_shown - 1;
-                    first_ant_shown = first_ant_shown -1;
-                    wborder(view_ants_wind, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-                    wrefresh(view_ants_wind);
-                    wscrl(view_ants_wind, -1);
-                    box(view_ants_wind, 0, 0);
-                    mvwprintw(view_ants_wind, 1, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(first_ant_shown),
-                              ant.age.at(first_ant_shown), ant.type.at(first_ant_shown).c_str());
-                    wrefresh(view_ants_wind);
+                if(firstAntShown - 1 >= 1){
+                    lastAntShown = lastAntShown - 1;
+                    firstAntShown = firstAntShown -1;
+                    wborder(viewAntsWind, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+                    wrefresh(viewAntsWind);
+                    wscrl(viewAntsWind, -1);
+                    box(viewAntsWind, 0, 0);
+                    mvwprintw(viewAntsWind, 1, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(firstAntShown),
+                              ant.age.at(firstAntShown), ant.type.at(firstAntShown).c_str());
+                    wrefresh(viewAntsWind);
                 }
                 break;
         }
     }
-    delwin(view_ants_wind);
+    delwin(viewAntsWind);
     clear();
 }
 
 //saves all the data from the game to a text file
-void save_game(std::vector<std::string>  rendered_map){
-    std::ofstream rendered_map_file("map.txt");
+void saveGame(std::vector<std::string>  renderedMap){
+    std::ofstream renderedMapFile("map.txt");
     for(int y = 0; y <= 24; y++){
-        rendered_map_file << rendered_map.at(y);
-        rendered_map_file << '\n';
+        renderedMapFile << renderedMap.at(y);
+        renderedMapFile << '\n';
     }
-    rendered_map_file.close();
+    renderedMapFile.close();
 }
 
 //loads all data from a text file and puts it into the game
-void load_game(std::vector<std::string>  rendered_map){
+void loadGame(){
 ///TODO have function load all data from a text file if told to
 
 }
 
 //change the state of the hex cube to selected or not
-toggle_hex_return toggle_hex_status(std::vector<std::string>  new_map, player_struct player){
+std::vector<std::string> toggleHexStatus(std::vector<std::string>  newMap, cursorStruct cursor){
 
-    char map_replace_character;
-    int posy_change[] = { -1, 0, 1, 0};
-    int posx_change[] = { 0, 1, 0, -1};
-    int pos_neg_one[] = { 1, -1};
-    toggle_hex_return return_values;
+    char mapReplaceCharacter;
+    int posYChange[] = { -1, 0, 1, 0};
+    int posXChange[] = { 0, 1, 0, -1};
+    int posNegOne[] = { 1, -1};
 
-    //check to find out what to replace spaces with and if the player is on a * spot.
-    if(player.replace_character != '*'){
-        if(player.replace_character == ':'){
-            map_replace_character = ' ';
-            return_values.return_player_replace_character = ' ';
-        }else if(player.replace_character == ' '){
-            map_replace_character = ':';
-            return_values.return_player_replace_character = ':';
+    //check to find out what to replace spaces with and if the cursor is on a * spot.
+    if(newMap[cursor.posY][cursor.posX] != '*'){
+        if(newMap[cursor.posY][cursor.posX] == ':'){
+            mapReplaceCharacter = ' ';
+        }else if(newMap[cursor.posY][cursor.posX] == ' '){
+            mapReplaceCharacter = ':';
         }
 
         //check to see if there are any fields left to replace
@@ -606,41 +554,38 @@ toggle_hex_return toggle_hex_status(std::vector<std::string>  new_map, player_st
         ///TODO think of better names for old_y/x(_b)
         //replace the checked spaces
         for(int i = 0; i <= 3; i++){
-            int old_y = player.posy;
-            int old_x = player.posx;
-            int old_y_b, old_x_b;
-            while((new_map[old_y + posy_change[i]][old_x + posx_change[i]] != '*') && (new_map[old_y + posy_change[i]][old_x + posx_change[i]] != '#')){
-                new_map[old_y + posy_change[i]][old_x + posx_change[i]] = map_replace_character;
-                old_y = old_y + posy_change[i];
-                old_x = old_x + posx_change[i];
-                old_y_b = old_y;
-                old_x_b = old_x;
+            int oldY = cursor.posY;
+            int oldX = cursor.posX;
+            int oldYB, oldXB;
+            while((newMap[oldY + posYChange[i]][oldX + posXChange[i]] != '*') && (newMap[oldY + posYChange[i]][oldX + posXChange[i]] != '#')){
+                newMap[oldY + posYChange[i]][oldX + posXChange[i]] = mapReplaceCharacter;
+                oldY = oldY + posYChange[i];
+                oldX = oldX + posXChange[i];
+                oldYB = oldY;
+                oldXB = oldX;
                 for(int i = 0; i <= 1; i++){
-                    while((new_map[old_y_b + pos_neg_one[i]][old_x_b] != '*') && (new_map[old_y_b + pos_neg_one[i]][old_x_b] != '#')){
-                        new_map[old_y_b + pos_neg_one[i]][old_x_b] = map_replace_character;
-                        old_y_b = old_y_b + pos_neg_one[i];
+                    while((newMap[oldYB + posNegOne[i]][oldXB] != '*') && (newMap[oldYB + posNegOne[i]][oldXB] != '#')){
+                        newMap[oldYB + posNegOne[i]][oldXB] = mapReplaceCharacter;
+                        oldYB = oldYB + posNegOne[i];
                     }
-                    old_y_b = old_y;
-                    while((new_map[old_y_b][old_x_b + pos_neg_one[i]] != '*') && (new_map[old_y_b][old_x_b + pos_neg_one[i]] != '#')){
-                        new_map[old_y_b][old_x_b + pos_neg_one[i]] = map_replace_character;
-                        old_x_b = old_x_b + pos_neg_one[i];
+                    oldYB = oldY;
+                    while((newMap[oldYB][oldXB + posNegOne[i]] != '*') && (newMap[oldYB][oldXB + posNegOne[i]] != '#')){
+                        newMap[oldYB][oldXB + posNegOne[i]] = mapReplaceCharacter;
+                        oldXB = oldXB + posNegOne[i];
                     }
-                    old_y_b = old_y;
-                    old_x_b = old_x;
+                    oldYB = oldY;
+                    oldXB = oldX;
                 }
             }
         }
-    }else{
-        return_values.return_player_replace_character = player.replace_character;
     }
-    return_values.return_map = new_map;
-    return return_values;
+    return newMap;
 }
 
-//checks to see if player is trying to move out of the map
-bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player){
-    char test_char = rendered_map[player.posy][player.posx];
-    if(test_char == '#'){
+//checks to see if cursor is trying to move out of the map
+bool checkForEdge(std::vector<std::string>  renderedMap, cursorStruct cursor){
+    char testChar = renderedMap[cursor.posY][cursor.posX];
+    if(testChar == '#'){
         return true;
     }else{
         return false;
@@ -648,97 +593,97 @@ bool check_for_edge(std::vector<std::string>  rendered_map, player_struct player
 }
 
 //prints out hex_map from map.h
-std::vector<std::string> initial_map_setup(player_struct player){
+std::vector<std::string> initialMapSetup(cursorStruct cursor){
 
     //map piece declaration.
-    std::vector<std::string> initial_map;
-    std::string hex_map_piece_1, hex_map_piece_2, hex_map_piece_3, hex_map_piece_4;
+    std::vector<std::string> initialMap;
+    std::string hexMapPiece1, hexMapPiece2, hexMapPiece3, hexMapPiece4;
+    int pieceNumber = 1;
 
-    hex_map_piece_1.append("#::******::::::::******::::::::******::::::::******::::::::******::::::::******#");
-    hex_map_piece_2.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
-    hex_map_piece_3.append("#*::::::::******::::::::******::::::::******::::::::******::::::::******:::::::#");
-    hex_map_piece_4.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
+    hexMapPiece1.append("#::******::::::::******::::::::******::::::::******::::::::******::::::::******#");
+    hexMapPiece2.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
+    hexMapPiece3.append("#*::::::::******::::::::******::::::::******::::::::******::::::::******:::::::#");
+    hexMapPiece4.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
 
     //fill the vector with empty spaces.
     for(int i = 0; i <= 24; i++){
-        initial_map.push_back("                                                                                 ");
+        initialMap.push_back("                                                                                 ");
     }
 
     //print the # border in red
     int x, y;
     for(x = 0; x <= 79; x++){
-        initial_map.at(0).at(x) = '#';
-        initial_map.at(24).at(x) = '#';
+        initialMap.at(0).at(x) = '#';
+        initialMap.at(24).at(x) = '#';
     }
     for(y = 0; y <= 24; y++){
-        initial_map.at(y).at(0) = '#';
-        initial_map.at(y).at(79) = '#';
+        initialMap.at(y).at(0) = '#';
+        initialMap.at(y).at(79) = '#';
     }
 
     //print the pieces of the map until full
-    int piece_number = 1;
     for(y = 1; y < 24; y++){
-        switch(piece_number){
+        switch(pieceNumber){
             case 1:
-                initial_map.at(y) = hex_map_piece_1;
-                piece_number = 2;
+                initialMap.at(y) = hexMapPiece1;
+                pieceNumber = 2;
                 break;
             case 2:
-                initial_map.at(y) = hex_map_piece_2;
-                piece_number = 3;
+                initialMap.at(y) = hexMapPiece2;
+                pieceNumber = 3;
                 break;
             case 3:
-                initial_map.at(y) = hex_map_piece_3;
-                piece_number = 4;
+                initialMap.at(y) = hexMapPiece3;
+                pieceNumber = 4;
                 break;
             case 4:
-                initial_map.at(y) = hex_map_piece_4;
-                piece_number = 1;
+                initialMap.at(y) = hexMapPiece4;
+                pieceNumber = 1;
                 break;
         }
     }
 
     //terminates each of the lines
     for(y = 0; y <= 24; y++){
-        initial_map[y][80] = '\0';
+        initialMap[y][80] = '\0';
     }
 
-    //put player in their initial position
-    initial_map[player.posy][player.posx] = player.player_character;
-    return initial_map;
+    return initialMap;
 }
 
 //refreshes the map to show any changes that have been made
-void map_refresh(std::vector<std::string>  rendered_map){
+void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor){
     int x, y;
     for(y = 0; y <= 24; y++){
         for(x = 0; x <= 79; x++){
-            if(rendered_map[y][x] == '#'){
-                attron(COLOR_PAIR(1));
-                mvaddch(y, x, rendered_map[y][x]);
-                attroff(COLOR_PAIR(1));
-            }else if(rendered_map[y][x] == '@'){
+            if((y == cursor.posY) && (x == cursor.posX)){
                 attron(COLOR_PAIR(2));
-                mvaddch(y, x, rendered_map[y][x]);
+                mvaddch(y, x, renderedMap[y][x]);
                 attroff(COLOR_PAIR(2));
-            }else if(rendered_map[y][x] == '.'){
-                attron(COLOR_PAIR(3));
-                mvaddch(y, x, rendered_map[y][x]);
-                attroff(COLOR_PAIR(3));
-            }else if(rendered_map[y][x] == '*'){
-                attron(COLOR_PAIR(4));
-                mvaddch(y, x, rendered_map[y][x]);
-                attroff(COLOR_PAIR(4));
-            }else if(rendered_map[y][x] == 'e' || rendered_map[y][x] == 'l' || rendered_map[y][x] == 'p' || rendered_map[y][x] == 'a' || rendered_map[y][x] == 'Q'){
-                attron(COLOR_PAIR(5));
-                mvaddch(y, x, rendered_map[y][x]);
-                attroff(COLOR_PAIR(5));
-            }else if(rendered_map[y][x] == ':'){
-                attron(COLOR_PAIR(6));
-                mvaddch(y, x, rendered_map[y][x]);
-                attroff(COLOR_PAIR(6));
             }else{
-                mvaddch(y, x, rendered_map[y][x]);
+                if(renderedMap[y][x] == '#'){
+                    attron(COLOR_PAIR(1));
+                    mvaddch(y, x, renderedMap[y][x]);
+                    attroff(COLOR_PAIR(1));
+                }else if(renderedMap[y][x] == '.'){
+                    attron(COLOR_PAIR(3));
+                    mvaddch(y, x, renderedMap[y][x]);
+                    attroff(COLOR_PAIR(3));
+                }else if(renderedMap[y][x] == '*'){
+                    attron(COLOR_PAIR(4));
+                    mvaddch(y, x, renderedMap[y][x]);
+                    attroff(COLOR_PAIR(4));
+                }else if(renderedMap[y][x] == 'e' || renderedMap[y][x] == 'l' || renderedMap[y][x] == 'p' || renderedMap[y][x] == 'a' || renderedMap[y][x] == 'Q'){
+                    attron(COLOR_PAIR(5));
+                    mvaddch(y, x, renderedMap[y][x]);
+                    attroff(COLOR_PAIR(5));
+                }else if(renderedMap[y][x] == ':'){
+                    attron(COLOR_PAIR(6));
+                    mvaddch(y, x, renderedMap[y][x]);
+                    attroff(COLOR_PAIR(6));
+                }else{
+                    mvaddch(y, x, renderedMap[y][x]);
+                }
             }
         }
     }
