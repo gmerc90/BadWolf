@@ -26,11 +26,6 @@
 #define TERM_Y_SIZE 30
 #define TERM_X_SIZE 80
 
-struct cursorStruct{
-    int posY;
-    int posX;
-};
-
 struct antStruct{
     std::vector<int> number;
     std::vector<int> birthTick;
@@ -47,7 +42,17 @@ struct antStruct{
     std::vector<std::string> type;
 };
 
+struct cursorStruct{
+    int posY;
+    int posX;
+};
+
 struct moveAntReturn{
+    antStruct returnAnt;
+    std::vector<std::string> returnMap;
+};
+
+struct toggleHexStatusReturn{
     antStruct returnAnt;
     std::vector<std::string> returnMap;
 };
@@ -56,14 +61,14 @@ bool checkForEdge(std::vector<std::string>  renderedMap, cursorStruct cursor);
 
 int selectAnt(antStruct ant, cursorStruct cursor);
 
+moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap);
+
 std::string viewMenu();
 
 std::vector<std::string> copyMap(std::vector<std::string>  mapToCopy);
 std::vector<std::string> initialMapSetup(cursorStruct cursor);
 
-moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap);
-
-std::vector<std::string> toggleHexStatus(std::vector<std::string>  newMap, cursorStruct cursor);
+toggleHexStatusReturn toggleHexStatus(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
 
 void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
 void killAnt();
@@ -84,6 +89,7 @@ int main(int argc, char *argv[]){
     std::string chosenMenuOption, currentMap;
 
     moveAntReturn moveAntReturnValues;
+    toggleHexStatusReturn toggleHexStatusReturnValues;
 
     //standard starting stuff for Curses
     initscr();
@@ -206,16 +212,25 @@ int main(int argc, char *argv[]){
 
             //move the selected ant to the location of the cursor
             case 'm':
-                moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, renderedMap);
-                renderedMap = moveAntReturnValues.returnMap;
-                ant = moveAntReturnValues.returnAnt;
-                refreshMap(renderedMap, cursor);
+                if(selectedAnt != NULL){
+                    moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, renderedMap);
+                    renderedMap = moveAntReturnValues.returnMap;
+                    ant = moveAntReturnValues.returnAnt;
+                    refreshMap(renderedMap, cursor);
+                }
                 break;
 
-            //select a cell
+            //dig into a filled space
             case 't':
-                renderedMap = toggleHexStatus(renderedMap, cursor);
-                refreshMap(renderedMap, cursor);
+                if(selectedAnt != NULL){
+                    moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, renderedMap);
+                    renderedMap = moveAntReturnValues.returnMap;
+                    ant = moveAntReturnValues.returnAnt;
+                    toggleHexStatusReturnValues = toggleHexStatus(renderedMap, ant, selectedAnt);
+                    renderedMap = toggleHexStatusReturnValues.returnMap;
+                    ant = toggleHexStatusReturnValues.returnAnt;
+                    refreshMap(renderedMap, cursor);
+                }
                 break;
 
             //create ants with their initial value
@@ -308,41 +323,14 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-//takes the selected ant a moves it to the desired location.
-moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap){
-    //declare the initial values
-    int travelY, travelX;
-    moveAntReturn returnData;
-
-    //check to see if an ant is selected
-    if(selectedAnt != NULL){
-
-        //find the difference in distance between the cursor and the ant
-        travelY = cursor.posY - ant.posY.at(selectedAnt);
-        travelX = cursor.posX - ant.posX.at(selectedAnt);
-
-        //move the ant the desired distance
-        if(renderedMap[cursor.posY][cursor.posX] != '*'){
-            renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.replaceCharacter.at(selectedAnt);
-            ant.posY.at(selectedAnt) = ant.posY.at(selectedAnt) + travelY;
-            ant.posX.at(selectedAnt) = ant.posX.at(selectedAnt) + travelX;
-            renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.character.at(selectedAnt);
-        }
+//checks to see if cursor is trying to move out of the map
+bool checkForEdge(std::vector<std::string>  renderedMap, cursorStruct cursor){
+    char testChar = renderedMap[cursor.posY][cursor.posX];
+    if(testChar == '#'){
+        return true;
+    }else{
+        return false;
     }
-    //set the structure values to the appropriate values and then return them
-    returnData.returnMap = renderedMap;
-    returnData.returnAnt = ant;
-    return returnData;
-}
-
-//copy a map from one array to another
-std::vector<std::string> copyMap(std::vector<std::string>  mapToCopy){
-    std::vector<std::string> copiedMap;
-    for(int y = 0; y <= 24; y++){
-        for(int x = 0; x <= 80; x++)
-            copiedMap[y][x] = mapToCopy[y][x];
-    }
-    return copiedMap;
 }
 
 //select an ant to give commands to
@@ -361,6 +349,31 @@ int selectAnt(antStruct ant, cursorStruct cursor){
         }
     }
     return selectedAnt;
+}
+
+//takes the selected ant a moves it to the desired location.
+moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap){
+    //declare the initial values
+    int travelY, travelX;
+    moveAntReturn returnData;
+
+    //find the difference in distance between the cursor and the ant
+    travelY = cursor.posY - ant.posY.at(selectedAnt);
+    travelX = cursor.posX - ant.posX.at(selectedAnt);
+
+    //move the ant the desired distance
+    if(renderedMap[cursor.posY][cursor.posX] != '*'){
+        renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.replaceCharacter.at(selectedAnt);
+        ant.posY.at(selectedAnt) = ant.posY.at(selectedAnt) + travelY;
+        ant.posX.at(selectedAnt) = ant.posX.at(selectedAnt) + travelX;
+        ant.replaceCharacter.at(selectedAnt) = renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)];
+        renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.character.at(selectedAnt);
+    }
+
+    //set the structure values to the appropriate values and then return them
+    returnData.returnMap = renderedMap;
+    returnData.returnAnt = ant;
+    return returnData;
 }
 
 //create a menu where you will be able to choose quit, save, and load options
@@ -445,9 +458,188 @@ std::string viewMenu(){
     return curItem;
 }
 
+//copy a map from one array to another
+std::vector<std::string> copyMap(std::vector<std::string>  mapToCopy){
+    std::vector<std::string> copiedMap;
+    for(int y = 0; y <= 24; y++){
+        for(int x = 0; x <= 80; x++)
+            copiedMap[y][x] = mapToCopy[y][x];
+    }
+    return copiedMap;
+}
+
+//prints out hex_map from map.h
+std::vector<std::string> initialMapSetup(cursorStruct cursor){
+
+    //map piece declaration.
+    std::vector<std::string> initialMap;
+    std::string hexMapPiece1, hexMapPiece2, hexMapPiece3, hexMapPiece4;
+    int pieceNumber = 1;
+
+    hexMapPiece1.append("#::******::::::::******::::::::******::::::::******::::::::******::::::::******#");
+    hexMapPiece2.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
+    hexMapPiece3.append("#*::::::::******::::::::******::::::::******::::::::******::::::::******:::::::#");
+    hexMapPiece4.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
+
+    //fill the vector with empty spaces.
+    for(int i = 0; i <= 24; i++){
+        initialMap.push_back("                                                                                 ");
+    }
+
+    //print the # border in red
+    int x, y;
+    for(x = 0; x <= 79; x++){
+        initialMap.at(0).at(x) = '#';
+        initialMap.at(24).at(x) = '#';
+    }
+    for(y = 0; y <= 24; y++){
+        initialMap.at(y).at(0) = '#';
+        initialMap.at(y).at(79) = '#';
+    }
+
+    //print the pieces of the map until full
+    for(y = 1; y < 24; y++){
+        switch(pieceNumber){
+            case 1:
+                initialMap.at(y) = hexMapPiece1;
+                pieceNumber = 2;
+                break;
+            case 2:
+                initialMap.at(y) = hexMapPiece2;
+                pieceNumber = 3;
+                break;
+            case 3:
+                initialMap.at(y) = hexMapPiece3;
+                pieceNumber = 4;
+                break;
+            case 4:
+                initialMap.at(y) = hexMapPiece4;
+                pieceNumber = 1;
+                break;
+        }
+    }
+
+    //terminates each of the lines
+    for(y = 0; y <= 24; y++){
+        initialMap[y][80] = '\0';
+    }
+
+    return initialMap;
+}
+
+//change the state of the hex cube to selected or not
+toggleHexStatusReturn toggleHexStatus(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt){
+
+    //variable declarations
+    toggleHexStatusReturn returnValue;
+    char mapReplaceCharacter;
+    int posYChange[] = { -1, 0, 1, 0};
+    int posXChange[] = { 0, 1, 0, -1};
+    int posNegOne[] = { 1, -1};
+
+    //check to find out what to replace spaces with and if the cursor is on a * spot.
+    if(ant.replaceCharacter.at(selectedAnt) != '*'){
+        if(ant.replaceCharacter.at(selectedAnt) == ':'){
+            mapReplaceCharacter = ' ';
+        }else if(ant.replaceCharacter.at(selectedAnt) == ' '){
+            mapReplaceCharacter = ':';
+        }
+
+        //replace spaces
+        for(int i = 0; i <= 3; i++){
+            int y = ant.posY.at(selectedAnt);
+            int x = ant.posX.at(selectedAnt);
+            int yB, xB;
+            while((renderedMap[y + posYChange[i]][x + posXChange[i]] != '*') && (renderedMap[y + posYChange[i]][x + posXChange[i]] != '#')){
+                y = y + posYChange[i];
+                x = x + posXChange[i];
+                renderedMap[y][x] = mapReplaceCharacter;
+                yB = y;
+                xB = x;
+                for(int i = 0; i <= 1; i++){
+                    while((renderedMap[yB + posNegOne[i]][xB] != '*') && (renderedMap[yB + posNegOne[i]][xB] != '#')){
+                        yB = yB + posNegOne[i];
+                        renderedMap[yB][xB] = mapReplaceCharacter;
+                    }
+                    yB = y;
+                    while((renderedMap[yB][xB + posNegOne[i]] != '*') && (renderedMap[yB][xB + posNegOne[i]] != '#')){
+                        xB = xB + posNegOne[i];
+                        renderedMap[yB][xB] = mapReplaceCharacter;
+                    }
+                    yB = y;
+                    xB = x;
+                }
+            }
+        }
+    }
+
+    //set return values and then return them to the main function
+    ant.replaceCharacter.at(selectedAnt) = mapReplaceCharacter;
+    renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.character.at(selectedAnt);
+
+    returnValue.returnAnt = ant;
+    returnValue.returnMap = renderedMap;
+
+    return returnValue;
+}
+
 //if needed, kill the ant
 void killAnt(){
     ///TODO make kill the ant if needed
+}
+
+//loads all data from a text file and puts it into the game
+void loadGame(){
+///TODO have function load all data from a text file if told to
+
+}
+
+//refreshes the map to show any changes that have been made
+void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor){
+    for(int y = 0; y <= 24; y++){
+        for(int x = 0; x <= 79; x++){
+            if((y == cursor.posY) && (x == cursor.posX)){
+                attron(COLOR_PAIR(2));
+                mvaddch(y, x, renderedMap[y][x]);
+                attroff(COLOR_PAIR(2));
+            }else{
+                if(renderedMap[y][x] == '#'){
+                    attron(COLOR_PAIR(1));
+                    mvaddch(y, x, renderedMap[y][x]);
+                    attroff(COLOR_PAIR(1));
+                }else if(renderedMap[y][x] == '.'){
+                    attron(COLOR_PAIR(3));
+                    mvaddch(y, x, renderedMap[y][x]);
+                    attroff(COLOR_PAIR(3));
+                }else if(renderedMap[y][x] == '*'){
+                    attron(COLOR_PAIR(4));
+                    mvaddch(y, x, renderedMap[y][x]);
+                    attroff(COLOR_PAIR(4));
+                }else if(renderedMap[y][x] == 'e' || renderedMap[y][x] == 'l' || renderedMap[y][x] == 'p' || renderedMap[y][x] == 'a' || renderedMap[y][x] == 'Q'){
+                    attron(COLOR_PAIR(5));
+                    mvaddch(y, x, renderedMap[y][x]);
+                    attroff(COLOR_PAIR(5));
+                }else if(renderedMap[y][x] == ':'){
+                    attron(COLOR_PAIR(6));
+                    mvaddch(y, x, renderedMap[y][x]);
+                    attroff(COLOR_PAIR(6));
+                }else{
+                    mvaddch(y, x, renderedMap[y][x]);
+                }
+            }
+        }
+    }
+    refresh();
+}
+
+//saves all the data from the game to a text file
+void saveGame(std::vector<std::string>  renderedMap){
+    std::ofstream renderedMapFile("map.txt");
+    for(int y = 0; y <= 24; y++){
+        renderedMapFile << renderedMap.at(y);
+        renderedMapFile << '\n';
+    }
+    renderedMapFile.close();
 }
 
 //view a list of all ants when tab is pressed, alive and dead, and are able to filter the list.
@@ -515,177 +707,4 @@ void viewAnts(antStruct ant, int tick){
     }
     delwin(viewAntsWind);
     clear();
-}
-
-//saves all the data from the game to a text file
-void saveGame(std::vector<std::string>  renderedMap){
-    std::ofstream renderedMapFile("map.txt");
-    for(int y = 0; y <= 24; y++){
-        renderedMapFile << renderedMap.at(y);
-        renderedMapFile << '\n';
-    }
-    renderedMapFile.close();
-}
-
-//loads all data from a text file and puts it into the game
-void loadGame(){
-///TODO have function load all data from a text file if told to
-
-}
-
-//change the state of the hex cube to selected or not
-std::vector<std::string> toggleHexStatus(std::vector<std::string>  newMap, cursorStruct cursor){
-
-    char mapReplaceCharacter;
-    int posYChange[] = { -1, 0, 1, 0};
-    int posXChange[] = { 0, 1, 0, -1};
-    int posNegOne[] = { 1, -1};
-
-    //check to find out what to replace spaces with and if the cursor is on a * spot.
-    if(newMap[cursor.posY][cursor.posX] != '*'){
-        if(newMap[cursor.posY][cursor.posX] == ':'){
-            mapReplaceCharacter = ' ';
-        }else if(newMap[cursor.posY][cursor.posX] == ' '){
-            mapReplaceCharacter = ':';
-        }
-
-        //check to see if there are any fields left to replace
-
-        ///TODO think of better names for old_y/x(_b)
-        //replace the checked spaces
-        for(int i = 0; i <= 3; i++){
-            int oldY = cursor.posY;
-            int oldX = cursor.posX;
-            int oldYB, oldXB;
-            while((newMap[oldY + posYChange[i]][oldX + posXChange[i]] != '*') && (newMap[oldY + posYChange[i]][oldX + posXChange[i]] != '#')){
-                newMap[oldY + posYChange[i]][oldX + posXChange[i]] = mapReplaceCharacter;
-                oldY = oldY + posYChange[i];
-                oldX = oldX + posXChange[i];
-                oldYB = oldY;
-                oldXB = oldX;
-                for(int i = 0; i <= 1; i++){
-                    while((newMap[oldYB + posNegOne[i]][oldXB] != '*') && (newMap[oldYB + posNegOne[i]][oldXB] != '#')){
-                        newMap[oldYB + posNegOne[i]][oldXB] = mapReplaceCharacter;
-                        oldYB = oldYB + posNegOne[i];
-                    }
-                    oldYB = oldY;
-                    while((newMap[oldYB][oldXB + posNegOne[i]] != '*') && (newMap[oldYB][oldXB + posNegOne[i]] != '#')){
-                        newMap[oldYB][oldXB + posNegOne[i]] = mapReplaceCharacter;
-                        oldXB = oldXB + posNegOne[i];
-                    }
-                    oldYB = oldY;
-                    oldXB = oldX;
-                }
-            }
-        }
-    }
-    return newMap;
-}
-
-//checks to see if cursor is trying to move out of the map
-bool checkForEdge(std::vector<std::string>  renderedMap, cursorStruct cursor){
-    char testChar = renderedMap[cursor.posY][cursor.posX];
-    if(testChar == '#'){
-        return true;
-    }else{
-        return false;
-    }
-}
-
-//prints out hex_map from map.h
-std::vector<std::string> initialMapSetup(cursorStruct cursor){
-
-    //map piece declaration.
-    std::vector<std::string> initialMap;
-    std::string hexMapPiece1, hexMapPiece2, hexMapPiece3, hexMapPiece4;
-    int pieceNumber = 1;
-
-    hexMapPiece1.append("#::******::::::::******::::::::******::::::::******::::::::******::::::::******#");
-    hexMapPiece2.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
-    hexMapPiece3.append("#*::::::::******::::::::******::::::::******::::::::******::::::::******:::::::#");
-    hexMapPiece4.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
-
-    //fill the vector with empty spaces.
-    for(int i = 0; i <= 24; i++){
-        initialMap.push_back("                                                                                 ");
-    }
-
-    //print the # border in red
-    int x, y;
-    for(x = 0; x <= 79; x++){
-        initialMap.at(0).at(x) = '#';
-        initialMap.at(24).at(x) = '#';
-    }
-    for(y = 0; y <= 24; y++){
-        initialMap.at(y).at(0) = '#';
-        initialMap.at(y).at(79) = '#';
-    }
-
-    //print the pieces of the map until full
-    for(y = 1; y < 24; y++){
-        switch(pieceNumber){
-            case 1:
-                initialMap.at(y) = hexMapPiece1;
-                pieceNumber = 2;
-                break;
-            case 2:
-                initialMap.at(y) = hexMapPiece2;
-                pieceNumber = 3;
-                break;
-            case 3:
-                initialMap.at(y) = hexMapPiece3;
-                pieceNumber = 4;
-                break;
-            case 4:
-                initialMap.at(y) = hexMapPiece4;
-                pieceNumber = 1;
-                break;
-        }
-    }
-
-    //terminates each of the lines
-    for(y = 0; y <= 24; y++){
-        initialMap[y][80] = '\0';
-    }
-
-    return initialMap;
-}
-
-//refreshes the map to show any changes that have been made
-void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor){
-    int x, y;
-    for(y = 0; y <= 24; y++){
-        for(x = 0; x <= 79; x++){
-            if((y == cursor.posY) && (x == cursor.posX)){
-                attron(COLOR_PAIR(2));
-                mvaddch(y, x, renderedMap[y][x]);
-                attroff(COLOR_PAIR(2));
-            }else{
-                if(renderedMap[y][x] == '#'){
-                    attron(COLOR_PAIR(1));
-                    mvaddch(y, x, renderedMap[y][x]);
-                    attroff(COLOR_PAIR(1));
-                }else if(renderedMap[y][x] == '.'){
-                    attron(COLOR_PAIR(3));
-                    mvaddch(y, x, renderedMap[y][x]);
-                    attroff(COLOR_PAIR(3));
-                }else if(renderedMap[y][x] == '*'){
-                    attron(COLOR_PAIR(4));
-                    mvaddch(y, x, renderedMap[y][x]);
-                    attroff(COLOR_PAIR(4));
-                }else if(renderedMap[y][x] == 'e' || renderedMap[y][x] == 'l' || renderedMap[y][x] == 'p' || renderedMap[y][x] == 'a' || renderedMap[y][x] == 'Q'){
-                    attron(COLOR_PAIR(5));
-                    mvaddch(y, x, renderedMap[y][x]);
-                    attroff(COLOR_PAIR(5));
-                }else if(renderedMap[y][x] == ':'){
-                    attron(COLOR_PAIR(6));
-                    mvaddch(y, x, renderedMap[y][x]);
-                    attroff(COLOR_PAIR(6));
-                }else{
-                    mvaddch(y, x, renderedMap[y][x]);
-                }
-            }
-        }
-    }
-    refresh();
 }

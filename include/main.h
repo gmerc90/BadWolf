@@ -48,6 +48,11 @@ class main
             std::vector<std::string> returnMap;
         };
 
+        struct toggleHexStatusReturn{
+            antStruct returnAnt;
+            std::vector<std::string> returnMap;
+        };
+
         int tick, selectedAnt;
 
         std::vector<std::string>  renderedMap, undergroundMap, surfaceMap;
@@ -72,7 +77,8 @@ class main
 
         std::vector<std::string> copyMap(std::vector<std::string>  mapToCopy);
         std::vector<std::string> initialMapSetup(cursorStruct cursor);
-        std::vector<std::string> toggleHexStatus(std::vector<std::string>  newMap, cursorStruct cursor);
+
+        toggleHexStatusReturn toggleHexStatus(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
 
         void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
         void killAnt();
