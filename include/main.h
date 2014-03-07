@@ -1,4 +1,5 @@
-/*  BadWolf
+    /*
+    BadWolf
     Copyright (C) 2014  Gary Mercado (errdivideby0)
 
     This program is free software: you can redistribute it and/or modify
@@ -12,7 +13,8 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    */
 
 #ifndef MAIN_H
 #define MAIN_H
@@ -75,7 +77,7 @@ class main
 
         std::string viewMenu();
 
-        std::vector<std::string> copyMap(std::vector<std::string>  mapToCopy);
+        std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor);
         std::vector<std::string> initialMapSetup(cursorStruct cursor);
 
         toggleHexStatusReturn toggleHexStatus(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);

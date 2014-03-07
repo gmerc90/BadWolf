@@ -1,4 +1,5 @@
-/*  BadWolf
+    /*
+    BadWolf
     Copyright (C) 2014  Gary Mercado (errdivideby0)
 
     This program is free software: you can redistribute it and/or modify
@@ -12,7 +13,8 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    */
 
 #include <curses.h>
 #include <vector>
@@ -40,6 +42,7 @@ struct antStruct{
     std::vector<char> replaceCharacter;
     std::vector<char> replaceCharacterOld;
     std::vector<std::string> type;
+    std::vector<std::string> location;
 };
 
 struct cursorStruct{
@@ -65,8 +68,8 @@ moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct curso
 
 std::string viewMenu();
 
-std::vector<std::string> copyMap(std::vector<std::string>  mapToCopy);
-std::vector<std::string> initialMapSetup(cursorStruct cursor);
+std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor);
+std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor);
 
 toggleHexStatusReturn toggleHexStatus(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
 
@@ -76,7 +79,7 @@ void viewAnts(antStruct ant, int tick);
 void saveGame(std::vector<std::string>  renderedMap);
 void loadGame();
 
-int main(int argc, char *argv[]){
+int main(){
 
     //set the set to the time for rand
     srand(time(NULL));
@@ -84,6 +87,8 @@ int main(int argc, char *argv[]){
     //initial basic declarations
     int ch, tick, vectorSize, totalAnts;
     int selectedAnt = NULL;
+
+    bool antExists;
 
     std::vector<std::string>  renderedMap, undergroundMap, surfaceMap;
     std::string chosenMenuOption, currentMap;
@@ -109,18 +114,21 @@ int main(int argc, char *argv[]){
     init_pair(4, COLOR_WHITE, COLOR_WHITE);
     init_pair(5, COLOR_GREEN, COLOR_BLACK);
     init_pair(6, COLOR_RED, COLOR_BLACK);
+    init_pair(7, COLOR_WHITE, COLOR_GREEN);
 
 
     //set initial position and initialize the cursor
     cursorStruct cursor;
-    cursor.posY = (LINES - 5)/2;
+    cursor.posY = 19;
     cursor.posX = COLS/2;
 
     //show initial map
-    renderedMap = initialMapSetup(cursor);
+    undergroundMap = initialUndergroundMapSetup(cursor);
+    surfaceMap = initialSurfaceMapSetup(cursor);
+    currentMap = "surface";
+    renderedMap = surfaceMap;
     refreshMap(renderedMap, cursor);
-    //undergroundMap = copyMap(renderedMap);
-    currentMap = "underground";
+
 
     //set initial tick value
     tick = 0;
@@ -136,7 +144,7 @@ int main(int argc, char *argv[]){
     ant.character.resize(1);
     ant.character.push_back('Q');
     ant.replaceCharacter.resize(1);
-    ant.replaceCharacter.push_back(':');
+    ant.replaceCharacter.push_back(' ');
     ant.type.resize(1);
     ant.type.push_back("Queen");
     ant.wings.resize(1);
@@ -144,11 +152,9 @@ int main(int argc, char *argv[]){
     ant.posX.resize(1);
     ant.posX.push_back(cursor.posX);
     ant.posY.resize(1);
-    if(renderedMap[cursor.posY - 1][cursor.posX] != '*'){
-        ant.posY.push_back(cursor.posY - 1);
-    }else{
-        ant.posY.push_back(cursor.posY - 2);
-    }
+    ant.posY.push_back(cursor.posY);
+    ant.location.resize(1);
+    ant.location.push_back(currentMap);
     renderedMap[ant.posY.at(1)][ant.posX.at(1)] = ant.character.at(1);
     refreshMap(renderedMap, cursor);
 
@@ -235,23 +241,30 @@ int main(int argc, char *argv[]){
 
             //create ants with their initial value
             case 'c':
-                vectorSize = ant.number.back() + 1;
-                ant.number.push_back(vectorSize);
-                ant.age.push_back(0);
-                ant.birthTick.push_back(tick);
-                ant.character.push_back('e');
-                ant.replaceCharacter.push_back(':');
-                ant.type.push_back("Egg");
-                ant.wings.push_back(false);
-                ant.posX.push_back(cursor.posX);
-                if(renderedMap[cursor.posY + 1][cursor.posX] != '*'){
-                    ant.posY.push_back(cursor.posY + 1);
-                }else{
-                    ant.posY.push_back(cursor.posY + 2);
+                //checks to see if an ant already exists at the location
+                antExists = false;
+                for(int i = 0; i <= ant.number.back(); i++){
+                    if((cursor.posY == ant.posY.at(i)) && (cursor.posX == ant.posX.at(i))){
+                        antExists = true;
+                    }
                 }
-                renderedMap[ant.posY.at(vectorSize)][ant.posX.at(vectorSize)] = ant.character.at(vectorSize);
-                mvprintw(24, 3, "%d", ant.number.size());
-                refreshMap(renderedMap, cursor);
+                //if an ant does not already exists at the location, an ant will be created
+                if(antExists == false){
+                    vectorSize = ant.number.back() + 1;
+                    ant.number.push_back(vectorSize);
+                    ant.age.push_back(0);
+                    ant.birthTick.push_back(tick);
+                    ant.character.push_back('e');
+                    ant.replaceCharacter.push_back(':');
+                    ant.type.push_back("Egg");
+                    ant.wings.push_back(false);
+                    ant.posX.push_back(cursor.posX);
+                    ant.posY.push_back(cursor.posY);
+                    ant.location.push_back(currentMap);
+                    renderedMap[ant.posY.at(vectorSize)][ant.posX.at(vectorSize)] = ant.character.at(vectorSize);
+                    mvprintw(24, 3, "%d", ant.number.size());
+                    refreshMap(renderedMap, cursor);
+                }
                 break;
 
             //bring up game menu
@@ -273,6 +286,19 @@ int main(int argc, char *argv[]){
             //view ants window
             case KEY_F(2):
                 viewAnts(ant, tick);
+                refreshMap(renderedMap, cursor);
+                break;
+
+            case KEY_F(3):
+                if(currentMap == "surface"){
+                    surfaceMap = renderedMap;
+                    renderedMap = undergroundMap;
+                    currentMap = "underground";
+                }else if(currentMap == "underground"){
+                    undergroundMap = renderedMap;
+                    renderedMap = surfaceMap;
+                    currentMap = "surface";
+                }
                 refreshMap(renderedMap, cursor);
                 break;
         }
@@ -458,18 +484,43 @@ std::string viewMenu(){
     return curItem;
 }
 
-//copy a map from one array to another
-std::vector<std::string> copyMap(std::vector<std::string>  mapToCopy){
-    std::vector<std::string> copiedMap;
-    for(int y = 0; y <= 24; y++){
-        for(int x = 0; x <= 80; x++)
-            copiedMap[y][x] = mapToCopy[y][x];
+std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor){
+
+    //variable declarations
+    std::vector<std::string> initialMap;
+    std::string dirt, grass;
+
+    dirt.append("#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::#");
+    grass.append("#==============================================================================#");
+
+    //fill the vector with empty spaces.
+    for(int i = 0; i <= 24; i++){
+        initialMap.push_back("                                                                                 ");
     }
-    return copiedMap;
+
+    //print the # border in red
+    for(int x = 0; x <= 79; x++){
+        initialMap.at(0).at(x) = '#';
+        initialMap.at(24).at(x) = '#';
+    }
+    for(int y = 0; y <= 24; y++){
+        initialMap.at(y).at(0) = '#';
+        initialMap.at(y).at(79) = '#';
+    }
+
+    //print ground
+    int y = 23;
+    for(int i = 1; i < 4; i++){
+        initialMap.at(y) = dirt;
+        y = y - 1;
+    }
+    initialMap.at(y) = grass;
+
+    return initialMap;
 }
 
-//prints out hex_map from map.h
-std::vector<std::string> initialMapSetup(cursorStruct cursor){
+//setup initial underground map
+std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor){
 
     //map piece declaration.
     std::vector<std::string> initialMap;
@@ -487,18 +538,17 @@ std::vector<std::string> initialMapSetup(cursorStruct cursor){
     }
 
     //print the # border in red
-    int x, y;
-    for(x = 0; x <= 79; x++){
+    for(int x = 0; x <= 79; x++){
         initialMap.at(0).at(x) = '#';
         initialMap.at(24).at(x) = '#';
     }
-    for(y = 0; y <= 24; y++){
+    for(int y = 0; y <= 24; y++){
         initialMap.at(y).at(0) = '#';
         initialMap.at(y).at(79) = '#';
     }
 
     //print the pieces of the map until full
-    for(y = 1; y < 24; y++){
+    for(int y = 1; y < 24; y++){
         switch(pieceNumber){
             case 1:
                 initialMap.at(y) = hexMapPiece1;
@@ -520,7 +570,7 @@ std::vector<std::string> initialMapSetup(cursorStruct cursor){
     }
 
     //terminates each of the lines
-    for(y = 0; y <= 24; y++){
+    for(int y = 0; y <= 24; y++){
         initialMap[y][80] = '\0';
     }
 
@@ -623,6 +673,10 @@ void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor){
                     attron(COLOR_PAIR(6));
                     mvaddch(y, x, renderedMap[y][x]);
                     attroff(COLOR_PAIR(6));
+                }else if(renderedMap[y][x] == '='){
+                    attron(COLOR_PAIR(7));
+                    mvaddch(y, x, renderedMap[y][x]);
+                    attroff(COLOR_PAIR(7));
                 }else{
                     mvaddch(y, x, renderedMap[y][x]);
                 }
