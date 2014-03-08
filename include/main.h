@@ -82,9 +82,10 @@ class main
         toggleHexStatusReturn toggleHexStatusReturnValues;
 
         //functions
-        int selectAnt(antStruct ant, cursorStruct cursor);
+        int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap);
 
-        moveAntReturn moveSelectedAnt(int selected_ant, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap);
+        moveAntReturn moveSelectedAnt(int selected_ant, antStruct ant, cursorStruct cursor, std::string currentMap
+                                      , std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
 
         moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor);
 
@@ -98,7 +99,7 @@ class main
         void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
         void killAnt();
         void viewAnts(antStruct ant, int tick);
-        void saveGame(std::vector<std::string>  renderedMap);
+        void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
         void loadGame();
 
 

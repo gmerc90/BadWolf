@@ -53,6 +53,8 @@ struct cursorStruct{
 struct moveAntReturn{
     antStruct returnAnt;
     std::vector<std::string> returnMap;
+    std::vector<std::string> returnSurfaceMap;
+    std::vector<std::string> returnUndergroundMap;
 };
 
 struct toggleHexStatusReturn{
@@ -65,9 +67,10 @@ struct moveCursorReturn{
     std::vector<std::string> returnMap;
 };
 
-int selectAnt(antStruct ant, cursorStruct cursor);
+int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap);
 
-moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap);
+moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::string currentMap
+                              , std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
 
 moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor);
 
@@ -81,7 +84,7 @@ toggleHexStatusReturn toggleHexStatus(std::vector<std::string>  renderedMap, ant
 void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
 void killAnt();
 void viewAnts(antStruct ant, int tick);
-void saveGame(std::vector<std::string>  renderedMap);
+void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
 void loadGame();
 
 int main(){
@@ -215,7 +218,7 @@ int main(){
 
             //select an ant
             case 'e':
-                selectedAnt = selectAnt(ant, cursor);
+                selectedAnt = selectAnt(ant, cursor, currentMap);
                 break;
 
             //clear selected ant with Shift + e
@@ -226,8 +229,10 @@ int main(){
             //move the selected ant to the location of the cursor
             case 'm':
                 if(selectedAnt != NULL){
-                    moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, renderedMap);
+                    moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
                     renderedMap = moveAntReturnValues.returnMap;
+                    surfaceMap = moveAntReturnValues.returnSurfaceMap;
+                    undergroundMap = moveAntReturnValues.returnUndergroundMap;
                     ant = moveAntReturnValues.returnAnt;
                     refreshMap(renderedMap, cursor);
                 }
@@ -236,8 +241,10 @@ int main(){
             //dig into a filled space
             case 't':
                 if(selectedAnt != NULL){
-                    moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, renderedMap);
+                    moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
                     renderedMap = moveAntReturnValues.returnMap;
+                    surfaceMap = moveAntReturnValues.returnSurfaceMap;
+                    undergroundMap = moveAntReturnValues.returnUndergroundMap;
                     ant = moveAntReturnValues.returnAnt;
                     toggleHexStatusReturnValues = toggleHexStatus(renderedMap, ant, selectedAnt);
                     renderedMap = toggleHexStatusReturnValues.returnMap;
@@ -263,7 +270,7 @@ int main(){
                         ant.age.push_back(0);
                         ant.birthTick.push_back(tick);
                         ant.character.push_back('e');
-                        ant.replaceCharacter.push_back(':');
+                        ant.replaceCharacter.push_back(renderedMap[cursor.posY][cursor.posX]);
                         ant.type.push_back("Egg");
                         ant.wings.push_back(false);
                         ant.posX.push_back(cursor.posX);
@@ -282,7 +289,12 @@ int main(){
                 refreshMap(renderedMap, cursor);
                 //take the appropriate actions for the chosen menu option.
                 if(chosenMenuOption == "Save"){
-                    saveGame(renderedMap);
+                    if(currentMap == "Surface"){
+                        surfaceMap = renderedMap;
+                    }else if(currentMap == "Underground"){
+                        undergroundMap = renderedMap;
+                    }
+                    saveGame(renderedMap, surfaceMap, undergroundMap);
                     chosenMenuOption = " ";
                 }else if(chosenMenuOption =="Load"){
                     loadGame();
@@ -362,14 +374,14 @@ int main(){
 }
 
 //select an ant to give commands to
-int selectAnt(antStruct ant, cursorStruct cursor){
+int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap){
     //declaring variables
     int selectedAnt, totalAnts;
 
     //check all the ants until it finds one that matches the cursor coordinates
     totalAnts = ant.number.back();
     for(int i = 0; i <= totalAnts; i++){
-        if((ant.posY[i] == cursor.posY) && (ant.posX[i] == cursor.posX)){
+        if((ant.posY[i] == cursor.posY) && (ant.posX[i] == cursor.posX) && (ant.location[i] == currentMap)){
             selectedAnt = i;
             break;
         }else{
@@ -380,7 +392,8 @@ int selectAnt(antStruct ant, cursorStruct cursor){
 }
 
 //takes the selected ant a moves it to the desired location.
-moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap){
+moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::string currentMap
+                              , std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap){
     //declare the initial values
     int travelY, travelX;
     moveAntReturn returnData;
@@ -389,9 +402,19 @@ moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct curso
     travelY = cursor.posY - ant.posY.at(selectedAnt);
     travelX = cursor.posX - ant.posX.at(selectedAnt);
 
-    //move the ant the desired distance
+    //move the ant to the desired location
     if(renderedMap[cursor.posY][cursor.posX] != '*'){
-        renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.replaceCharacter.at(selectedAnt);
+        if(ant.location.at(selectedAnt) != currentMap){
+            if(ant.location.at(selectedAnt) == "Surface"){
+                surfaceMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.replaceCharacter.at(selectedAnt);
+                ant.location.at(selectedAnt) = "Underground";
+            }else if(ant.location.at(selectedAnt) == "Underground"){
+                undergroundMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.replaceCharacter.at(selectedAnt);
+                ant.location.at(selectedAnt) = "Surface";
+            }
+        }else if(ant.location.at(selectedAnt) == currentMap){
+            renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.replaceCharacter.at(selectedAnt);
+        }
         ant.posY.at(selectedAnt) = ant.posY.at(selectedAnt) + travelY;
         ant.posX.at(selectedAnt) = ant.posX.at(selectedAnt) + travelX;
         ant.replaceCharacter.at(selectedAnt) = renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)];
@@ -400,6 +423,8 @@ moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct curso
 
     //set the structure values to the appropriate values and then return them
     returnData.returnMap = renderedMap;
+    returnData.returnSurfaceMap = surfaceMap;
+    returnData.returnUndergroundMap = undergroundMap;
     returnData.returnAnt = ant;
     return returnData;
 }
@@ -707,13 +732,24 @@ void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor){
 }
 
 //saves all the data from the game to a text file
-void saveGame(std::vector<std::string>  renderedMap){
-    std::ofstream renderedMapFile("map.txt");
+void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap){
+    std::ofstream mapFile("map.txt");
+    mapFile << "Rendered Map" << '\n';
     for(int y = 0; y <= 24; y++){
-        renderedMapFile << renderedMap.at(y);
-        renderedMapFile << '\n';
+        mapFile << renderedMap.at(y);
+        mapFile << '\n';
     }
-    renderedMapFile.close();
+    mapFile << "Surface Map" << '\n';
+    for(int y = 0; y <= 24; y++){
+        mapFile << surfaceMap.at(y);
+        mapFile << '\n';
+    }
+    mapFile << "Underground Map" << '\n';
+    for(int y = 0; y <= 24; y++){
+        mapFile << undergroundMap.at(y);
+        mapFile << '\n';
+    }
+    mapFile.close();
 }
 
 //view a list of all ants when tab is pressed, alive and dead, and are able to filter the list.
