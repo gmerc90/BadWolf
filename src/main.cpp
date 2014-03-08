@@ -57,7 +57,7 @@ struct moveAntReturn{
     std::vector<std::string> returnUndergroundMap;
 };
 
-struct toggleHexStatusReturn{
+struct digReturn{
     antStruct returnAnt;
     std::vector<std::string> returnMap;
 };
@@ -69,8 +69,8 @@ struct moveCursorReturn{
 
 int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap);
 
-moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::string currentMap
-                              , std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
+moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::string currentMap,
+                               std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
 
 moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor);
 
@@ -79,7 +79,8 @@ std::string viewMenu();
 std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor);
 std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor);
 
-toggleHexStatusReturn toggleHexStatus(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
+digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
+digReturn surfaceDig(std::vector<std::string> renderedMap, antStruct ant, int selectedAnt);
 
 void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
 void killAnt();
@@ -106,7 +107,7 @@ int main(){
 
     std::string chosenMenuOption, currentMap;
 
-    toggleHexStatusReturn toggleHexStatusReturnValues;
+    digReturn digReturnValues;
 
     //standard starting stuff for Curses
     initscr();
@@ -173,16 +174,15 @@ int main(){
     //main game loop
     while(chosenMenuOption != "Quit"){
 
-        /*checks to see if a key was pressed,
-        if one has been, it performs the necessary code to
-        complete the desired action*/
+        //checks to see if a key was pressed,
+        //if one has been, it performs the necessary code to
+        //complete the desired action
         ///TODO change it to 'x' miliseconds later and let it be configurable in a config file
         timeout(100);
         switch(ch = getch()){
 
             //move up
             case KEY_UP:
-            case 'w':
                 moveCursorReturnValues = moveCursor(-1, 0, renderedMap, cursor);
                 renderedMap = moveCursorReturnValues.returnMap;
                 cursor = moveCursorReturnValues.returnCursor;
@@ -191,7 +191,6 @@ int main(){
 
             //move left
             case KEY_LEFT:
-            case 'a':
                 moveCursorReturnValues = moveCursor(0, -1, renderedMap, cursor);
                 renderedMap = moveCursorReturnValues.returnMap;
                 cursor = moveCursorReturnValues.returnCursor;
@@ -200,7 +199,6 @@ int main(){
 
             //move down
             case KEY_DOWN:
-            case 's':
                 moveCursorReturnValues = moveCursor(1, 0, renderedMap, cursor);
                 renderedMap = moveCursorReturnValues.returnMap;
                 cursor = moveCursorReturnValues.returnCursor;
@@ -209,7 +207,6 @@ int main(){
 
             //move right
             case KEY_RIGHT:
-            case 'd':
                 moveCursorReturnValues = moveCursor(0, 1, renderedMap, cursor);
                 renderedMap = moveCursorReturnValues.returnMap;
                 cursor = moveCursorReturnValues.returnCursor;
@@ -217,12 +214,12 @@ int main(){
                 break;
 
             //select an ant
-            case 'e':
+            case 's':
                 selectedAnt = selectAnt(ant, cursor, currentMap);
                 break;
 
             //clear selected ant with Shift + e
-            case 'E':
+            case 'S':
                 selectedAnt = NULL;
                 break;
 
@@ -239,17 +236,24 @@ int main(){
                 break;
 
             //dig into a filled space
-            case 't':
+            case 'd':
                 if(selectedAnt != NULL){
                     moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
                     renderedMap = moveAntReturnValues.returnMap;
                     surfaceMap = moveAntReturnValues.returnSurfaceMap;
                     undergroundMap = moveAntReturnValues.returnUndergroundMap;
                     ant = moveAntReturnValues.returnAnt;
-                    toggleHexStatusReturnValues = toggleHexStatus(renderedMap, ant, selectedAnt);
-                    renderedMap = toggleHexStatusReturnValues.returnMap;
-                    ant = toggleHexStatusReturnValues.returnAnt;
-                    refreshMap(renderedMap, cursor);
+                    if(currentMap != "Surface"){
+                        digReturnValues = undergroundDig(renderedMap, ant, selectedAnt);
+                        renderedMap = digReturnValues.returnMap;
+                        ant = digReturnValues.returnAnt;
+                        refreshMap(renderedMap, cursor);
+                    }else if(currentMap == "Surface"){
+                        digReturnValues = surfaceDig(renderedMap, ant, selectedAnt);
+                        renderedMap = digReturnValues.returnMap;
+                        ant = digReturnValues.returnAnt;
+                        refreshMap(renderedMap, cursor);
+                    }
                 }
                 break;
 
@@ -392,8 +396,8 @@ int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap){
 }
 
 //takes the selected ant a moves it to the desired location.
-moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::string currentMap
-                              , std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap){
+moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::string currentMap,
+                               std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap){
     //declare the initial values
     int travelY, travelX;
     moveAntReturn returnData;
@@ -434,8 +438,8 @@ moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::str
     //variable declarations
     moveCursorReturn returnValues;
 
-    /*checks to see if value is x or y direction, then checks to
-    make sure you're not trying to move off the map before completing the move*/
+    //checks to see if value is x or y direction, then checks to
+    //make sure you're not trying to move off the map before completing the move
     if(renderedMap[cursor.posY + moveValueY][cursor.posX + moveValueX] != '#'){
         cursor.posY = cursor.posY + moveValueY;
         cursor.posX = cursor.posX + moveValueX;
@@ -572,10 +576,10 @@ std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor){
     std::string hexMapPiece1, hexMapPiece2, hexMapPiece3, hexMapPiece4;
     int pieceNumber = 1;
 
-    hexMapPiece1.append("#::******::::::::******::::::::******::::::::******::::::::******::::::::******#");
-    hexMapPiece2.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
-    hexMapPiece3.append("#*::::::::******::::::::******::::::::******::::::::******::::::::******:::::::#");
-    hexMapPiece4.append("#:*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::*::::::#");
+    hexMapPiece1.append("#::***:::::***:::::***:::::***:::::***:::::***:::::***:::::***:::::***:::::***:#");
+    hexMapPiece2.append("#:*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*#");
+    hexMapPiece3.append("#*:::::***:::::***:::::***:::::***:::::***:::::***:::::***:::::***:::::***:::::#");
+    hexMapPiece4.append("#:*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*:::*#");
 
     //fill the vector with empty spaces.
     for(int i = 0; i <= 24; i++){
@@ -623,10 +627,10 @@ std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor){
 }
 
 //change the state of the hex cube to selected or not
-toggleHexStatusReturn toggleHexStatus(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt){
+digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt){
 
     //variable declarations
-    toggleHexStatusReturn returnValue;
+    digReturn returnValue;
     char mapReplaceCharacter;
     int posYChange[] = { -1, 0, 1, 0};
     int posXChange[] = { 0, 1, 0, -1};
@@ -676,6 +680,44 @@ toggleHexStatusReturn toggleHexStatus(std::vector<std::string>  renderedMap, ant
     returnValue.returnMap = renderedMap;
 
     return returnValue;
+}
+
+//dig on the surface
+digReturn surfaceDig(std::vector<std::string> renderedMap, antStruct ant, int selectedAnt){
+    //variable declaration
+    char digReplaceChar = ' ';
+    char replaceChar = ':';
+    int digChangeValues[] = {0, 1, -1};
+    int replaceValues[] = {2, -2, 3, -3, 4, -4, 5, -5};
+    int x, y, j;
+    digReturn returnValues;
+
+    x = ant.posX.at(selectedAnt);
+    y = ant.posY.at(selectedAnt);
+
+    //digs the hole
+    while(renderedMap[y + 1][x] != '#'){
+        y = y + 1;
+        for(int i = 0; i <= 2; i++ ){
+            renderedMap[y][x + digChangeValues[i]] = digReplaceChar;
+        }
+    }
+    y = ant.posY.at(selectedAnt) + 1;
+    j = 7;
+
+    //makes the ant hill
+    while(j > 0){
+        for(int i = 0; i <= j; i++){
+            renderedMap[y][x + replaceValues[i]] = replaceChar;
+        }
+        j = j - 2;
+        y = y - 1;
+    }
+
+    //bundle the return values then return them
+    returnValues.returnAnt = ant;
+    returnValues.returnMap = renderedMap;
+    return returnValues;
 }
 
 //if needed, kill the ant
