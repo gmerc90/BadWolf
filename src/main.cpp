@@ -350,9 +350,9 @@ int main(){
                     default:
                         break;
                 }
-                if(ant.location.at(i) == currentMap){
-                    renderedMap[ant.posY.at(i)][ant.posX.at(i)] = ant.character.at(i);
-                }
+            }
+            if(ant.location.at(i) == currentMap){
+                renderedMap[ant.posY.at(i)][ant.posX.at(i)] = ant.character.at(i);
             }
         }
         refreshMap(renderedMap, cursor);
