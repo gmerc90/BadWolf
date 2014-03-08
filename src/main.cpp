@@ -60,11 +60,16 @@ struct toggleHexStatusReturn{
     std::vector<std::string> returnMap;
 };
 
-bool checkForEdge(std::vector<std::string>  renderedMap, cursorStruct cursor);
+struct moveCursorReturn{
+    cursorStruct returnCursor;
+    std::vector<std::string> returnMap;
+};
 
 int selectAnt(antStruct ant, cursorStruct cursor);
 
 moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap);
+
+moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor);
 
 std::string viewMenu();
 
@@ -85,15 +90,19 @@ int main(){
     srand(time(NULL));
 
     //initial basic declarations
+    bool antExists;
+
     int ch, tick, vectorSize, totalAnts;
     int selectedAnt = NULL;
 
-    bool antExists;
-
     std::vector<std::string>  renderedMap, undergroundMap, surfaceMap;
-    std::string chosenMenuOption, currentMap;
 
     moveAntReturn moveAntReturnValues;
+
+    moveCursorReturn moveCursorReturnValues;
+
+    std::string chosenMenuOption, currentMap;
+
     toggleHexStatusReturn toggleHexStatusReturnValues;
 
     //standard starting stuff for Curses
@@ -119,13 +128,13 @@ int main(){
 
     //set initial position and initialize the cursor
     cursorStruct cursor;
-    cursor.posY = 19;
-    cursor.posX = COLS/2;
+    cursor.posY = (LINES - 5) / 2;
+    cursor.posX = COLS / 2;
 
     //show initial map
     undergroundMap = initialUndergroundMapSetup(cursor);
     surfaceMap = initialSurfaceMapSetup(cursor);
-    currentMap = "surface";
+    currentMap = "Surface";
     renderedMap = surfaceMap;
     refreshMap(renderedMap, cursor);
 
@@ -150,9 +159,9 @@ int main(){
     ant.wings.resize(1);
     ant.wings.push_back(true);
     ant.posX.resize(1);
-    ant.posX.push_back(cursor.posX);
+    ant.posX.push_back(COLS / 2);
     ant.posY.resize(1);
-    ant.posY.push_back(cursor.posY);
+    ant.posY.push_back(19);
     ant.location.resize(1);
     ant.location.push_back(currentMap);
     renderedMap[ant.posY.at(1)][ant.posX.at(1)] = ant.character.at(1);
@@ -167,43 +176,40 @@ int main(){
         ///TODO change it to 'x' miliseconds later and let it be configurable in a config file
         timeout(100);
         switch(ch = getch()){
+
             //move up
             case KEY_UP:
             case 'w':
-                cursor.posY = cursor.posY - 1;
-                if(checkForEdge(renderedMap, cursor) != false){
-                    cursor.posY = cursor.posY + 1;
-                }
+                moveCursorReturnValues = moveCursor(-1, 0, renderedMap, cursor);
+                renderedMap = moveCursorReturnValues.returnMap;
+                cursor = moveCursorReturnValues.returnCursor;
                 refreshMap(renderedMap, cursor);
                 break;
 
             //move left
             case KEY_LEFT:
             case 'a':
-                cursor.posX = cursor.posX - 1;
-                if(checkForEdge(renderedMap, cursor) != false){
-                    cursor.posX = cursor.posX + 1;
-                }
+                moveCursorReturnValues = moveCursor(0, -1, renderedMap, cursor);
+                renderedMap = moveCursorReturnValues.returnMap;
+                cursor = moveCursorReturnValues.returnCursor;
                 refreshMap(renderedMap, cursor);
                 break;
 
             //move down
             case KEY_DOWN:
             case 's':
-                cursor.posY = cursor.posY + 1;
-                if(checkForEdge(renderedMap, cursor) != false){
-                    cursor.posY = cursor.posY -1;
-                }
+                moveCursorReturnValues = moveCursor(1, 0, renderedMap, cursor);
+                renderedMap = moveCursorReturnValues.returnMap;
+                cursor = moveCursorReturnValues.returnCursor;
                 refreshMap(renderedMap, cursor);
                 break;
 
             //move right
             case KEY_RIGHT:
             case 'd':
-                cursor.posX = cursor.posX + 1;
-                if(checkForEdge(renderedMap, cursor) != false){
-                    cursor.posX = cursor.posX - 1;
-                }
+                moveCursorReturnValues = moveCursor(0, 1, renderedMap, cursor);
+                renderedMap = moveCursorReturnValues.returnMap;
+                cursor = moveCursorReturnValues.returnCursor;
                 refreshMap(renderedMap, cursor);
                 break;
 
@@ -211,6 +217,7 @@ int main(){
             case 'e':
                 selectedAnt = selectAnt(ant, cursor);
                 break;
+
             //clear selected ant with Shift + e
             case 'E':
                 selectedAnt = NULL;
@@ -250,20 +257,22 @@ int main(){
                 }
                 //if an ant does not already exists at the location, an ant will be created
                 if(antExists == false){
-                    vectorSize = ant.number.back() + 1;
-                    ant.number.push_back(vectorSize);
-                    ant.age.push_back(0);
-                    ant.birthTick.push_back(tick);
-                    ant.character.push_back('e');
-                    ant.replaceCharacter.push_back(':');
-                    ant.type.push_back("Egg");
-                    ant.wings.push_back(false);
-                    ant.posX.push_back(cursor.posX);
-                    ant.posY.push_back(cursor.posY);
-                    ant.location.push_back(currentMap);
-                    renderedMap[ant.posY.at(vectorSize)][ant.posX.at(vectorSize)] = ant.character.at(vectorSize);
-                    mvprintw(24, 3, "%d", ant.number.size());
-                    refreshMap(renderedMap, cursor);
+                    if(renderedMap[cursor.posY][cursor.posX] != '*'){
+                        vectorSize = ant.number.back() + 1;
+                        ant.number.push_back(vectorSize);
+                        ant.age.push_back(0);
+                        ant.birthTick.push_back(tick);
+                        ant.character.push_back('e');
+                        ant.replaceCharacter.push_back(':');
+                        ant.type.push_back("Egg");
+                        ant.wings.push_back(false);
+                        ant.posX.push_back(cursor.posX);
+                        ant.posY.push_back(cursor.posY);
+                        ant.location.push_back(currentMap);
+                        renderedMap[ant.posY.at(vectorSize)][ant.posX.at(vectorSize)] = ant.character.at(vectorSize);
+                        mvprintw(24, 3, "%d", ant.number.size());
+                        refreshMap(renderedMap, cursor);
+                    }
                 }
                 break;
 
@@ -289,15 +298,16 @@ int main(){
                 refreshMap(renderedMap, cursor);
                 break;
 
+            //toggle view between the surface and underground
             case KEY_F(3):
-                if(currentMap == "surface"){
+                if(currentMap == "Surface"){
                     surfaceMap = renderedMap;
                     renderedMap = undergroundMap;
-                    currentMap = "underground";
-                }else if(currentMap == "underground"){
+                    currentMap = "Underground";
+                }else if(currentMap == "Underground"){
                     undergroundMap = renderedMap;
                     renderedMap = surfaceMap;
-                    currentMap = "surface";
+                    currentMap = "Surface";
                 }
                 refreshMap(renderedMap, cursor);
                 break;
@@ -328,7 +338,9 @@ int main(){
                     default:
                         break;
                 }
-                renderedMap[ant.posY.at(i)][ant.posX.at(i)] = ant.character.at(i);
+                if(ant.location.at(i) == currentMap){
+                    renderedMap[ant.posY.at(i)][ant.posX.at(i)] = ant.character.at(i);
+                }
             }
         }
         refreshMap(renderedMap, cursor);
@@ -347,16 +359,6 @@ int main(){
     //terminate program
     endwin();
     return 0;
-}
-
-//checks to see if cursor is trying to move out of the map
-bool checkForEdge(std::vector<std::string>  renderedMap, cursorStruct cursor){
-    char testChar = renderedMap[cursor.posY][cursor.posX];
-    if(testChar == '#'){
-        return true;
-    }else{
-        return false;
-    }
 }
 
 //select an ant to give commands to
@@ -400,6 +402,23 @@ moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct curso
     returnData.returnMap = renderedMap;
     returnData.returnAnt = ant;
     return returnData;
+}
+
+moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor){
+
+    //variable declarations
+    moveCursorReturn returnValues;
+
+    /*checks to see if value is x or y direction, then checks to
+    make sure you're not trying to move off the map before completing the move*/
+    if(renderedMap[cursor.posY + moveValueY][cursor.posX + moveValueX] != '#'){
+        cursor.posY = cursor.posY + moveValueY;
+        cursor.posX = cursor.posX + moveValueX;
+    }
+    //bundle values then return them
+    returnValues.returnCursor = cursor;
+    returnValues.returnMap = renderedMap;
+    return returnValues;
 }
 
 //create a menu where you will be able to choose quit, save, and load options
@@ -484,6 +503,7 @@ std::string viewMenu(){
     return curItem;
 }
 
+//setup initial surface map
 std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor){
 
     //variable declarations
@@ -721,7 +741,7 @@ void viewAnts(antStruct ant, int tick){
         if(y > 18){
             break;
         }
-        mvwprintw(viewAntsWind, y, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(i), ant.age.at(i), ant.type.at(i).c_str());
+        mvwprintw(viewAntsWind, y, 1, "Ant Number: %d | Age: %d | Type: %s | %s", ant.number.at(i), ant.age.at(i), ant.type.at(i).c_str(), ant.location.at(i).c_str());
         y = y + 1;
         lastAntShown = i;
     }
@@ -739,8 +759,8 @@ void viewAnts(antStruct ant, int tick){
                     wrefresh(viewAntsWind);
                     wscrl(viewAntsWind, 1);
                     box(viewAntsWind, 0, 0);
-                    mvwprintw(viewAntsWind, 18, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(lastAntShown),
-                              ant.age.at(lastAntShown), ant.type.at(lastAntShown).c_str());
+                    mvwprintw(viewAntsWind, 18, 1, "Ant Number: %d | Age: %d | Type: %s | %s", ant.number.at(lastAntShown),
+                              ant.age.at(lastAntShown), ant.type.at(lastAntShown).c_str(), ant.location.at(lastAntShown).c_str());
                     wrefresh(viewAntsWind);
                 }
                 break;
@@ -752,8 +772,8 @@ void viewAnts(antStruct ant, int tick){
                     wrefresh(viewAntsWind);
                     wscrl(viewAntsWind, -1);
                     box(viewAntsWind, 0, 0);
-                    mvwprintw(viewAntsWind, 1, 1, "Ant Number: %d | Age: %d | Type: %s", ant.number.at(firstAntShown),
-                              ant.age.at(firstAntShown), ant.type.at(firstAntShown).c_str());
+                    mvwprintw(viewAntsWind, 1, 1, "Ant Number: %d | Age: %d | Type: %s | %s", ant.number.at(firstAntShown),
+                               ant.age.at(firstAntShown), ant.type.at(firstAntShown).c_str(), ant.location.at(firstAntShown).c_str());
                     wrefresh(viewAntsWind);
                 }
                 break;

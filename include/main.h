@@ -24,6 +24,7 @@ class main
 {
     public:
 
+        //structs
         struct cursorStruct{
             int posY;
             int posX;
@@ -55,25 +56,37 @@ class main
             std::vector<std::string> returnMap;
         };
 
+        struct moveCursorReturn{
+            cursorStruct returnCursor;
+            std::vector<std::string> returnMap;
+        };
+
+        //variables
         int tick, selectedAnt;
 
+        //functions
         std::vector<std::string>  renderedMap, undergroundMap, surfaceMap;
-
-        moveAntReturn moveSelectedAnt(int selected_ant, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap);
 
     protected:
 
     private:
 
+        //variables
         int ch, vectorSize, totalAnts;
 
-        bool checkForEdge(std::vector<std::string>  renderedMap, cursorStruct cursor);
-
         moveAntReturn moveAntReturnValues;
+        moveCursorReturn moveCursorReturnValues;
 
         std::string chosenMenuOption, currentMap;
 
+        toggleHexStatusReturn toggleHexStatusReturnValues;
+
+        //functions
         int selectAnt(antStruct ant, cursorStruct cursor);
+
+        moveAntReturn moveSelectedAnt(int selected_ant, antStruct ant, cursorStruct cursor, std::vector<std::string> renderedMap);
+
+        moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor);
 
         std::string viewMenu();
 
