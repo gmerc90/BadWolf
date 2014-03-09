@@ -237,7 +237,7 @@ int main(){
 
             //dig into a filled space
             case 'd':
-                if(selectedAnt != NULL){
+                if((selectedAnt != NULL) && (renderedMap[ant.posY.at(selectedAnt) + 1][ant.posX.at(selectedAnt)] == '=')){
                     moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
                     renderedMap = moveAntReturnValues.returnMap;
                     surfaceMap = moveAntReturnValues.returnSurfaceMap;
