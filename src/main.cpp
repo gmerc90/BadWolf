@@ -237,18 +237,18 @@ int main(){
 
             //dig into a filled space
             case 'd':
-                if((selectedAnt != NULL) && (renderedMap[ant.posY.at(selectedAnt) + 1][ant.posX.at(selectedAnt)] == '=')){
+                if(selectedAnt != NULL){
                     moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
                     renderedMap = moveAntReturnValues.returnMap;
                     surfaceMap = moveAntReturnValues.returnSurfaceMap;
                     undergroundMap = moveAntReturnValues.returnUndergroundMap;
                     ant = moveAntReturnValues.returnAnt;
-                    if(currentMap != "Surface"){
+                    if(currentMap == "Underground"){
                         digReturnValues = undergroundDig(renderedMap, ant, selectedAnt);
                         renderedMap = digReturnValues.returnMap;
                         ant = digReturnValues.returnAnt;
                         refreshMap(renderedMap, cursor);
-                    }else if(currentMap == "Surface"){
+                    }else if((currentMap == "Surface") && (renderedMap[ant.posY.at(selectedAnt) + 1][ant.posX.at(selectedAnt)] == '=')){
                         digReturnValues = surfaceDig(renderedMap, ant, selectedAnt);
                         renderedMap = digReturnValues.returnMap;
                         ant = digReturnValues.returnAnt;
