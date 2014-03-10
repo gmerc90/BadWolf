@@ -225,7 +225,7 @@ int main(){
 
             //move the selected ant to the location of the cursor
             case 'm':
-                if(selectedAnt != NULL){
+                if((selectedAnt != NULL) && (renderedMap[cursor.posY][cursor.posX] == ' ')){
                     moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
                     renderedMap = moveAntReturnValues.returnMap;
                     surfaceMap = moveAntReturnValues.returnSurfaceMap;
@@ -401,9 +401,18 @@ moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct curso
     //declare the initial values
     int travelY, travelX;
     moveAntReturn returnData;
+    travelX = 0;
+    travelY = 0;
 
     //find the difference in distance between the cursor and the ant
-    travelY = cursor.posY - ant.posY.at(selectedAnt);
+    //if on surface, only move horizontally unless the space is clear.
+    if(currentMap == "Surface"){
+        if(renderedMap[cursor.posY][cursor.posX] == ' '){
+            travelY = cursor.posY - ant.posY.at(selectedAnt);
+        }
+    }else if(currentMap == "Underground"){
+        travelY = cursor.posY - ant.posY.at(selectedAnt);
+    }
     travelX = cursor.posX - ant.posX.at(selectedAnt);
 
     //move the ant to the desired location
