@@ -83,9 +83,10 @@ std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor);
 digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
 digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::string> undergroundMap, antStruct ant, int selectedAnt);
 
-void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
+void displayInfoWindow();
 void killAnt();
 void loadGame();
+void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
 void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
 void statusAreaPrint(antStruct ant, int selectedAnt);
 void viewAnts(antStruct ant, int tick);
@@ -328,6 +329,12 @@ int main(){
                     renderedMap = surfaceMap;
                     currentMap = "Surface";
                 }
+                refreshMap(renderedMap, cursor);
+                break;
+
+            //display an information window
+            case KEY_F(4):
+                displayInfoWindow();
                 refreshMap(renderedMap, cursor);
                 break;
         }
@@ -749,6 +756,57 @@ digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::stri
     return returnValues;
 }
 
+//display the information window
+void displayInfoWindow(){
+    //variable declaration
+    int ch, height, width, windY, windX;
+    int y = 4;
+    int x = NULL;
+    std::vector<std::string> information;
+    WINDOW *infoWindow;
+
+    //set the information to the line strings
+    information.resize(1);
+    information.at(0).append("You are an ant. Your goal is to make your");
+    information.push_back("colony become as successful as possible.");
+    information.push_back("You will face many hard ships but here is");
+    information.push_back("some information to help you along the way.");
+    information.push_back("'=' represents grass and ':' represents dirt.");
+    information.push_back("The Queen is represented with 'Q' and individual");
+    information.push_back("ant's are represented by either 'e', 'l', 'p',");
+    information.push_back(" or 'a' depeneding on it's stage (egg, larve,");
+    information.push_back("pupae, or adult.");
+
+    //set window values
+    height = 17;
+    width = 50;
+    windY = ((LINES - 5) - height) / 2;
+    windX = (COLS - width) / 2;
+
+    //create the info window and draw the borders.
+    infoWindow = newwin(height, width, windY, windX);
+    keypad(infoWindow, TRUE);
+    box(infoWindow, 0, 0);
+    wrefresh(infoWindow);
+
+    //print the screen information
+    for(int i = 0; i < information.size(); i++){
+        x = (width - information.at(i).length()) / 2;
+        mvwprintw(infoWindow, y, x, "%s", information.at(i).c_str());
+        y = y + 1;
+    }
+    wrefresh(infoWindow);
+
+    //wait for f4 to be pressed to close the window
+    while((ch = getch()) != KEY_F(4)){
+
+    }
+
+    //delete window, clear terminal
+    delwin(infoWindow);
+    clear();
+}
+
 //if needed, kill the ant
 void killAnt(){
     ///TODO make kill the ant if needed
@@ -823,11 +881,12 @@ void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> su
     mapFile.close();
 }
 
+//prints out all the information for the status area bellow the map
 void statusAreaPrint(antStruct ant, int selectedAnt){
     //variable declaration
     std::string firstLineString, thirdLineString;
 
-    firstLineString.append("F1: menu | F2: View Ants | F3: Toggle Map | F4: More Info");
+    firstLineString.append("F1: Menu | F2: View Ants | F3: Toggle Map | F4: More Info");
     thirdLineString.append("Available Commands");
 
     //print basic controls

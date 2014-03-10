@@ -96,9 +96,10 @@ class main
         digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
         digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::string> undergroundMap, antStruct ant, int selectedAnt);
 
-        void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
+        void displayInfoWindow();
         void killAnt();
         void loadGame();
+        void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
         void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
         void statusAreaPrint(antStruct ant, int selectedAnt);
         void viewAnts(antStruct ant, int tick);
