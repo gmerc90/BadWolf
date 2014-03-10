@@ -84,9 +84,10 @@ digReturn surfaceDig(std::vector<std::string> renderedMap, antStruct ant, int se
 
 void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
 void killAnt();
-void viewAnts(antStruct ant, int tick);
-void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
 void loadGame();
+void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
+void statusAreaPrint(antStruct ant, int selectedAnt);
+void viewAnts(antStruct ant, int tick);
 
 int main(){
 
@@ -361,16 +362,8 @@ int main(){
         }
         refreshMap(renderedMap, cursor);
 
-        //show selected ant information
-        if(selectedAnt != NULL){
-            move(26, 0);
-            clrtoeol();
-            mvprintw(26, 1, "Number: %d | Type: %s | Age: %d", ant.number.at(selectedAnt), ant.type.at(selectedAnt).c_str(), ant.age.at(selectedAnt));
-        }else{
-            move(26, 0);
-            clrtoeol();
-            mvprintw(26, 1, "Number:   | Type:   | Age:   ");
-        }
+        //show Status Area information
+        statusAreaPrint(ant, selectedAnt);
     }
     //terminate program
     endwin();
@@ -801,6 +794,31 @@ void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> su
         mapFile << '\n';
     }
     mapFile.close();
+}
+
+void statusAreaPrint(antStruct ant, int selectedAnt){
+    //variable declaration
+    std::string firstLineString, thirdLineString;
+
+    firstLineString.append("F1: menu | F2: View Ants | F3: Toggle Map | F4: More Info");
+    thirdLineString.append("Available Commands");
+
+    //print information
+    mvprintw(25, 1, "%s", firstLineString.c_str());
+
+    //checks to see if ant is selected then prints the appropriate information
+    if(selectedAnt != NULL){
+        move(26, 0);
+        clrtoeol();
+        mvprintw(26, 1, "Number: %d | Type: %s | Age: %d", ant.number.at(selectedAnt), ant.type.at(selectedAnt).c_str(), ant.age.at(selectedAnt));
+    }else{
+        move(26, 0);
+        clrtoeol();
+        mvprintw(26, 1, "Number:   | Type:   | Age:   ");
+    }
+
+    mvprintw(27, 1, "%s", thirdLineString.c_str());
+
 }
 
 //view a list of all ants when tab is pressed, alive and dead, and are able to filter the list.

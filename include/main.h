@@ -98,13 +98,10 @@ class main
 
         void refreshMap(std::vector<std::string>  renderedMap, cursorStruct cursor);
         void killAnt();
-        void viewAnts(antStruct ant, int tick);
-        void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
         void loadGame();
-
-
-
-
+        void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
+        void statusAreaPrint(antStruct ant, int selectedAnt);
+        void viewAnts(antStruct ant, int tick);
 };
 
 #endif // MAIN_H
