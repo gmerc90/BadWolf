@@ -74,6 +74,7 @@ struct createAntReturn{
     std::vector<std::string> returnMap;
 };
 
+bool checkForGround(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int selectedAnt);
 createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int tick, std::string currentMap);
 digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
 digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::string> undergroundMap, antStruct ant, int selectedAnt);
@@ -98,6 +99,7 @@ int main(){
     srand(time(NULL));
 
     //initial variable declarations
+    bool moveAntPossible = true;
     createAntReturn createAntReturnValues;
     digReturn digReturnValues;
     int ch, tick, totalAnts;
@@ -228,7 +230,11 @@ int main(){
 
             //move the selected ant to the location of the cursor
             case 'm':
-                if((selectedAnt != NULL) && (renderedMap[cursor.posY][cursor.posX] == ' ')){
+                moveAntPossible = true;
+                if((currentMap == "Underground") && (renderedMap[cursor.posY][cursor.posX] != ' ')){
+                    moveAntPossible = false;
+                }
+                if((selectedAnt != NULL) && (moveAntPossible == true)){
                     moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
                     renderedMap = moveAntReturnValues.returnMap;
                     surfaceMap = moveAntReturnValues.returnSurfaceMap;
@@ -356,6 +362,29 @@ int main(){
     endwin();
     return 0;
 }
+//when on the surface, check to see if an ant is either surrounded by ground or touching it on a side
+bool checkForGround(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int selectedAnt){
+    //variable declaration
+    bool touchingGround = false;
+    int testY[] = {1, -1, 0, 0};
+    int testX[] = {0, 0, 1, -1};
+
+    //run through test to see if ground is in an acceptable place.
+    for(int i = 0; i <= 3; i++){
+        if((renderedMap[cursor.posY + testY[i]][cursor.posX + testX[i]] != ' ')
+           && (renderedMap[cursor.posY + testY[i]][cursor.posX + testX[i]]) != ant.character.at(selectedAnt)){
+            touchingGround = true;
+        }
+    }
+    if(touchingGround != true){
+        if((renderedMap[cursor.posY][cursor.posX + 2] != ' ') && (renderedMap[cursor.posY][cursor.posX - 2] != ' ')){
+            touchingGround = true;
+        }
+    }
+    return touchingGround;
+}
+
+//creates an ant when requested
 createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int tick, std::string currentMap){
 
     //variable declarations
@@ -545,7 +574,7 @@ moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct curso
     //find the difference in distance between the cursor and the ant
     //if on surface, only move horizontally unless the space is clear.
     if(currentMap == "Surface"){
-        if(renderedMap[cursor.posY][cursor.posX] == ' '){
+        if((checkForGround(ant, renderedMap, cursor, selectedAnt) != false) && (renderedMap[cursor.posY][cursor.posX] == ' ')){
             travelY = cursor.posY - ant.posY.at(selectedAnt);
         }
     }else if(currentMap == "Underground"){

@@ -82,6 +82,7 @@ class main
         digReturn digReturnValues;
 
         //functions
+        bool checkForGround(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int selectedAnt);
         createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int tick, std::string currentMap);
         digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
         digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::string> undergroundMap, antStruct ant, int selectedAnt);
