@@ -69,21 +69,21 @@ struct moveCursorReturn{
     std::vector<std::string> returnMap;
 };
 
-int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap);
+struct createAntReturn{
+    antStruct returnAnt;
+    std::vector<std::string> returnMap;
+};
 
-moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::string currentMap,
-                               std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
-
-moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor);
-
-std::string viewMenu();
-
-std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor);
-std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor);
-
+createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int tick, std::string currentMap);
 digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
 digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::string> undergroundMap, antStruct ant, int selectedAnt);
-
+int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap);
+moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::string currentMap,
+                               std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
+moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor);
+std::string viewMenu();
+std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor);
+std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor);
 void displayInfoWindow();
 void killAnt();
 void loadGame();
@@ -97,21 +97,15 @@ int main(){
     //set the set to the time for rand
     srand(time(NULL));
 
-    //initial basic declarations
-    bool antExists;
-
-    int ch, tick, vectorSize, totalAnts;
-    int selectedAnt = NULL;
-
-    std::vector<std::string>  renderedMap, undergroundMap, surfaceMap;
-
-    moveAntReturn moveAntReturnValues;
-
-    moveCursorReturn moveCursorReturnValues;
-
-    std::string chosenMenuOption, currentMap;
-
+    //initial variable declarations
+    createAntReturn createAntReturnValues;
     digReturn digReturnValues;
+    int ch, tick, totalAnts;
+    int selectedAnt = NULL;
+    moveAntReturn moveAntReturnValues;
+    moveCursorReturn moveCursorReturnValues;
+    std::string chosenMenuOption, currentMap;
+    std::vector<std::string>  renderedMap, undergroundMap, surfaceMap;
 
     //standard starting stuff for Curses
     initscr();
@@ -269,36 +263,10 @@ int main(){
 
             //create ants with their initial value
             case 'c':
-                //checks to see if an ant already exists at the location
-                antExists = false;
-                for(int i = 0; i <= ant.number.back(); i++){
-                    if((cursor.posY == ant.posY.at(i)) && (cursor.posX == ant.posX.at(i))){
-                        antExists = true;
-                    }
-                }
-                //if an ant does not already exists at the location, an ant will be created
-                if(antExists == false){
-                    if(renderedMap[cursor.posY][cursor.posX] != '*'){
-                        vectorSize = ant.number.back() + 1;
-                        ant.number.push_back(vectorSize);
-                        ant.age.push_back(0);
-                        ant.birthTick.push_back(tick);
-                        ant.character.push_back('e');
-                        ant.replaceCharacter.push_back(renderedMap[cursor.posY][cursor.posX]);
-                        ant.type.push_back("Egg");
-                        ant.wings.push_back(false);
-                        ant.posX.push_back(cursor.posX);
-                        ant.posY.push_back(cursor.posY);
-                        ant.location.push_back(currentMap);
-                        ant.availableCommands.resize(vectorSize + 1);
-                        ant.availableCommands.at(vectorSize).resize(1);
-                        ant.availableCommands.at(vectorSize).at(0).append("Move");
-                        ant.availableCommands.at(vectorSize).push_back("Dig");
-                        renderedMap[ant.posY.at(vectorSize)][ant.posX.at(vectorSize)] = ant.character.at(vectorSize);
-                        mvprintw(24, 3, "%d", ant.number.size());
-                        refreshMap(renderedMap, cursor);
-                    }
-                }
+                createAntReturnValues = createAnt(ant, renderedMap, cursor, tick, currentMap);
+                ant = createAntReturnValues.returnAnt;
+                renderedMap = createAntReturnValues.returnMap;
+                refreshMap(renderedMap, cursor);
                 break;
 
             //bring up game menu
@@ -387,6 +355,164 @@ int main(){
     //terminate program
     endwin();
     return 0;
+}
+createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int tick, std::string currentMap){
+
+    //variable declarations
+    bool antExists = false;
+    createAntReturn returnValues;
+    int vectorSize;
+
+    //checks to see if an ant already exists at the location
+    for(int i = 0; i <= ant.number.back(); i++){
+        if((cursor.posY == ant.posY.at(i)) && (cursor.posX == ant.posX.at(i))){
+            antExists = true;
+        }
+    }
+    //if an ant does not already exists at the location, an ant will be created
+    if((antExists == false) && (renderedMap[cursor.posY][cursor.posX] == ' ')){
+        if(renderedMap[cursor.posY][cursor.posX] != '*'){
+            vectorSize = ant.number.back() + 1;
+            ant.number.push_back(vectorSize);
+            ant.age.push_back(0);
+            ant.birthTick.push_back(tick);
+            ant.character.push_back('e');
+            ant.replaceCharacter.push_back(renderedMap[cursor.posY][cursor.posX]);
+            ant.type.push_back("Egg");
+            ant.wings.push_back(false);
+            ant.posX.push_back(cursor.posX);
+            ant.posY.push_back(cursor.posY);
+            ant.location.push_back(currentMap);
+            ant.availableCommands.resize(vectorSize + 1);
+            ant.availableCommands.at(vectorSize).resize(1);
+            ant.availableCommands.at(vectorSize).at(0).append("Move");
+            ant.availableCommands.at(vectorSize).push_back("Dig");
+            renderedMap[ant.posY.at(vectorSize)][ant.posX.at(vectorSize)] = ant.character.at(vectorSize);
+        }
+    }
+    //bundle the return values then return them
+    returnValues.returnAnt = ant;
+    returnValues.returnMap = renderedMap;
+    return returnValues;
+}
+
+//change the state of the hex cube to selected or not
+digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt){
+
+    //variable declarations
+    digReturn returnValue;
+    char mapReplaceCharacter = ' ';
+    int posYChange[] = { -1, 0, 1, 0};
+    int posXChange[] = { 0, 1, 0, -1};
+    int posNegOne[] = { 1, -1};
+
+    //replace spaces
+    for(int i = 0; i <= 3; i++){
+        int y = ant.posY.at(selectedAnt);
+        int x = ant.posX.at(selectedAnt);
+        int yB, xB;
+        while((renderedMap[y + posYChange[i]][x + posXChange[i]] != '*') && (renderedMap[y + posYChange[i]][x + posXChange[i]] != '#')){
+            y = y + posYChange[i];
+            x = x + posXChange[i];
+            renderedMap[y][x] = mapReplaceCharacter;
+            yB = y;
+            xB = x;
+            for(int i = 0; i <= 1; i++){
+                while((renderedMap[yB + posNegOne[i]][xB] != '*') && (renderedMap[yB + posNegOne[i]][xB] != '#')){
+                    yB = yB + posNegOne[i];
+                    renderedMap[yB][xB] = mapReplaceCharacter;
+                }
+                yB = y;
+                while((renderedMap[yB][xB + posNegOne[i]] != '*') && (renderedMap[yB][xB + posNegOne[i]] != '#')){
+                    xB = xB + posNegOne[i];
+                    renderedMap[yB][xB] = mapReplaceCharacter;
+                }
+                yB = y;
+                xB = x;
+            }
+        }
+    }
+
+    //set return values and then return them to the main function
+    ant.replaceCharacter.at(selectedAnt) = mapReplaceCharacter;
+    renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.character.at(selectedAnt);
+
+    returnValue.returnAnt = ant;
+    returnValue.returnMap = renderedMap;
+    //returnValue.returnUndergroundMap = NULL;
+
+    return returnValue;
+}
+
+//dig on the surface
+digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::string> undergroundMap, antStruct ant, int selectedAnt){
+    //variable declaration
+    char digReplaceChar = ' ';
+    char replaceChar = ':';
+    int digChangeValues[] = {0, 1, -1};
+    int replaceValues[] = {2, -2, 3, -3, 4, -4, 5, -5};
+    int posYChange[] = { -1, 0, 1, 0};
+    int posXChange[] = { 0, 1, 0, -1};
+    int posNegOne[] = { 1, -1};
+    int x, y, j;
+    digReturn returnValues;
+
+    x = ant.posX.at(selectedAnt);
+    y = ant.posY.at(selectedAnt);
+
+    //digs the hole
+    while(renderedMap[y + 1][x] != '#'){
+        y = y + 1;
+        for(int i = 0; i <= 2; i++ ){
+            renderedMap[y][x + digChangeValues[i]] = digReplaceChar;
+        }
+    }
+    y = ant.posY.at(selectedAnt) + 1;
+    j = 7;
+
+    //makes the ant hill
+    while(j > 0){
+        for(int i = 0; i <= j; i++){
+            renderedMap[y][x + replaceValues[i]] = replaceChar;
+        }
+        j = j - 2;
+        y = y - 1;
+    }
+
+    //clear the space underground at the appropriate location
+    y = 1;
+    if(undergroundMap[y][x] == '*'){
+        y = y+1;
+    }
+    for(int i = 0; i <= 3; i++){
+        int yB, xB;
+        while((undergroundMap[y + posYChange[i]][x + posXChange[i]] != '*') && (undergroundMap[y + posYChange[i]][x + posXChange[i]] != '#')){
+            y = y + posYChange[i];
+            x = x + posXChange[i];
+            undergroundMap[y][x] = digReplaceChar;
+            yB = y;
+            xB = x;
+            for(int i = 0; i <= 1; i++){
+                while((undergroundMap[yB + posNegOne[i]][xB] != '*') && (undergroundMap[yB + posNegOne[i]][xB] != '#')){
+                    yB = yB + posNegOne[i];
+                    undergroundMap[yB][xB] = digReplaceChar;
+                }
+                yB = y;
+                while((undergroundMap[yB][xB + posNegOne[i]] != '*') && (undergroundMap[yB][xB + posNegOne[i]] != '#')){
+                    xB = xB + posNegOne[i];
+                    undergroundMap[yB][xB] = digReplaceChar;
+                }
+                yB = y;
+                xB = x;
+            }
+        }
+    }
+
+    //bundle the return values then return them
+    returnValues.returnAnt = ant;
+    returnValues.returnMap = renderedMap;
+    returnValues.returnUndergroundMap = undergroundMap;
+    return returnValues;
 }
 
 //select an ant to give commands to
@@ -645,125 +771,6 @@ std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor){
     }
 
     return initialMap;
-}
-
-//change the state of the hex cube to selected or not
-digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt){
-
-    //variable declarations
-    digReturn returnValue;
-    char mapReplaceCharacter = ' ';
-    int posYChange[] = { -1, 0, 1, 0};
-    int posXChange[] = { 0, 1, 0, -1};
-    int posNegOne[] = { 1, -1};
-
-    //replace spaces
-    for(int i = 0; i <= 3; i++){
-        int y = ant.posY.at(selectedAnt);
-        int x = ant.posX.at(selectedAnt);
-        int yB, xB;
-        while((renderedMap[y + posYChange[i]][x + posXChange[i]] != '*') && (renderedMap[y + posYChange[i]][x + posXChange[i]] != '#')){
-            y = y + posYChange[i];
-            x = x + posXChange[i];
-            renderedMap[y][x] = mapReplaceCharacter;
-            yB = y;
-            xB = x;
-            for(int i = 0; i <= 1; i++){
-                while((renderedMap[yB + posNegOne[i]][xB] != '*') && (renderedMap[yB + posNegOne[i]][xB] != '#')){
-                    yB = yB + posNegOne[i];
-                    renderedMap[yB][xB] = mapReplaceCharacter;
-                }
-                yB = y;
-                while((renderedMap[yB][xB + posNegOne[i]] != '*') && (renderedMap[yB][xB + posNegOne[i]] != '#')){
-                    xB = xB + posNegOne[i];
-                    renderedMap[yB][xB] = mapReplaceCharacter;
-                }
-                yB = y;
-                xB = x;
-            }
-        }
-    }
-
-    //set return values and then return them to the main function
-    ant.replaceCharacter.at(selectedAnt) = mapReplaceCharacter;
-    renderedMap[ant.posY.at(selectedAnt)][ant.posX.at(selectedAnt)] = ant.character.at(selectedAnt);
-
-    returnValue.returnAnt = ant;
-    returnValue.returnMap = renderedMap;
-    //returnValue.returnUndergroundMap = NULL;
-
-    return returnValue;
-}
-
-//dig on the surface
-digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::string> undergroundMap, antStruct ant, int selectedAnt){
-    //variable declaration
-    char digReplaceChar = ' ';
-    char replaceChar = ':';
-    int digChangeValues[] = {0, 1, -1};
-    int replaceValues[] = {2, -2, 3, -3, 4, -4, 5, -5};
-    int posYChange[] = { -1, 0, 1, 0};
-    int posXChange[] = { 0, 1, 0, -1};
-    int posNegOne[] = { 1, -1};
-    int x, y, j;
-    digReturn returnValues;
-
-    x = ant.posX.at(selectedAnt);
-    y = ant.posY.at(selectedAnt);
-
-    //digs the hole
-    while(renderedMap[y + 1][x] != '#'){
-        y = y + 1;
-        for(int i = 0; i <= 2; i++ ){
-            renderedMap[y][x + digChangeValues[i]] = digReplaceChar;
-        }
-    }
-    y = ant.posY.at(selectedAnt) + 1;
-    j = 7;
-
-    //makes the ant hill
-    while(j > 0){
-        for(int i = 0; i <= j; i++){
-            renderedMap[y][x + replaceValues[i]] = replaceChar;
-        }
-        j = j - 2;
-        y = y - 1;
-    }
-
-    //clear the space underground at the appropriate location
-    y = 1;
-    if(undergroundMap[y][x] == '*'){
-        y = y+1;
-    }
-    for(int i = 0; i <= 3; i++){
-        int yB, xB;
-        while((undergroundMap[y + posYChange[i]][x + posXChange[i]] != '*') && (undergroundMap[y + posYChange[i]][x + posXChange[i]] != '#')){
-            y = y + posYChange[i];
-            x = x + posXChange[i];
-            undergroundMap[y][x] = digReplaceChar;
-            yB = y;
-            xB = x;
-            for(int i = 0; i <= 1; i++){
-                while((undergroundMap[yB + posNegOne[i]][xB] != '*') && (undergroundMap[yB + posNegOne[i]][xB] != '#')){
-                    yB = yB + posNegOne[i];
-                    undergroundMap[yB][xB] = digReplaceChar;
-                }
-                yB = y;
-                while((undergroundMap[yB][xB + posNegOne[i]] != '*') && (undergroundMap[yB][xB + posNegOne[i]] != '#')){
-                    xB = xB + posNegOne[i];
-                    undergroundMap[yB][xB] = digReplaceChar;
-                }
-                yB = y;
-                xB = x;
-            }
-        }
-    }
-
-    //bundle the return values then return them
-    returnValues.returnAnt = ant;
-    returnValues.returnMap = renderedMap;
-    returnValues.returnUndergroundMap = undergroundMap;
-    return returnValues;
 }
 
 //display the information window
