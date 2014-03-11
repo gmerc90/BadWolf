@@ -43,6 +43,7 @@ struct antStruct{
     std::vector<char> replaceCharacterOld;
     std::vector<std::string> type;
     std::vector<std::string> location;
+    std::vector<std::vector<std::string> > availableCommands;
 };
 
 struct cursorStruct{
@@ -171,6 +172,11 @@ int main(){
     ant.posY.push_back(19);
     ant.location.resize(1);
     ant.location.push_back(currentMap);
+    ant.availableCommands.resize(2);
+    ant.availableCommands.at(1).resize(1);
+    ant.availableCommands.at(1).at(0).append("Move");
+    ant.availableCommands.at(1).push_back("Dig");
+    ant.availableCommands.at(1).push_back("Eat Wings");
     renderedMap[ant.posY.at(1)][ant.posX.at(1)] = ant.character.at(1);
     refreshMap(renderedMap, cursor);
 
@@ -284,6 +290,10 @@ int main(){
                         ant.posX.push_back(cursor.posX);
                         ant.posY.push_back(cursor.posY);
                         ant.location.push_back(currentMap);
+                        ant.availableCommands.resize(vectorSize + 1);
+                        ant.availableCommands.at(vectorSize).resize(1);
+                        ant.availableCommands.at(vectorSize).at(0).append("Move");
+                        ant.availableCommands.at(vectorSize).push_back("Dig");
                         renderedMap[ant.posY.at(vectorSize)][ant.posX.at(vectorSize)] = ant.character.at(vectorSize);
                         mvprintw(24, 3, "%d", ant.number.size());
                         refreshMap(renderedMap, cursor);
@@ -776,9 +786,12 @@ void displayInfoWindow(){
     information.push_back("ant's are represented by either 'e', 'l', 'p',");
     information.push_back(" or 'a' depeneding on it's stage (egg, larve,");
     information.push_back("pupae, or adult.");
+    information.push_back("Use the arrow keys to move the cursor and use");
+    information.push_back("'s' to select an ant when it's highlighted.");
+    information.push_back("'c' is used to create a new ant");
 
     //set window values
-    height = 17;
+    height = information.size() + 8;
     width = 50;
     windY = ((LINES - 5) - height) / 2;
     windX = (COLS - width) / 2;
@@ -885,9 +898,16 @@ void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> su
 void statusAreaPrint(antStruct ant, int selectedAnt){
     //variable declaration
     std::string firstLineString, thirdLineString;
+    int commandX = 1;
+    int totalCommands = ant.availableCommands.at(selectedAnt).size() - 1;
+    char commandKey = ' ';
 
     firstLineString.append("F1: Menu | F2: View Ants | F3: Toggle Map | F4: More Info");
     thirdLineString.append("Available Commands");
+
+    //clear the status area
+    move(25, 0);
+    clrtobot();
 
     //print basic controls
     mvprintw(25, 1, "%s", firstLineString.c_str());
@@ -904,7 +924,18 @@ void statusAreaPrint(antStruct ant, int selectedAnt){
     }
 
     //print the available commands
-    mvprintw(27, 1, "%s", thirdLineString.c_str());
+    if(selectedAnt != NULL){
+        mvprintw(27, 1, "%s", thirdLineString.c_str());
+        for(int i = 0; i <= totalCommands; i++){
+            commandKey = ant.availableCommands.at(selectedAnt).at(i).at(0);
+            if(i == totalCommands){
+                mvprintw(28, commandX, "%c: %s", commandKey, ant.availableCommands.at(selectedAnt).at(i).c_str());
+            }else{
+                mvprintw(28, commandX, "%c: %s |", commandKey, ant.availableCommands.at(selectedAnt).at(i).c_str());
+                commandX = commandX + ant.availableCommands.at(selectedAnt).at(i).length() + 6;
+            }
+        }
+    }
 }
 
 //view a list of all ants when tab is pressed, alive and dead, and are able to filter the list.
