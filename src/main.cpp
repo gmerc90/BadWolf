@@ -78,7 +78,7 @@ bool checkForGround(antStruct ant, std::vector<std::string> renderedMap, cursorS
 createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int tick, std::string currentMap);
 digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
 digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::string> undergroundMap, antStruct ant, int selectedAnt);
-int findSurface(std::vector<std::string> renderedMap, cursorStruct cursor);
+int findSurface(std::vector<std::string> renderedMap, cursorStruct cursor, antStruct ant, int selectedAnt);
 int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap);
 moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::string currentMap,
                                std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
@@ -239,6 +239,8 @@ int main(){
                 moveAntPossible = true;
                 if((currentMap == "Underground") && (renderedMap[cursor.posY][cursor.posX] != ' ')){
                     moveAntPossible = false;
+                }else if((cursor.posY == ant.posY.at(selectedAnt)) && (cursor.posX == ant.posX.at(selectedAnt))){
+                    moveAntPossible = false;
                 }
                 if((selectedAnt != -1) && (moveAntPossible == true)){
                     moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
@@ -252,7 +254,7 @@ int main(){
 
             //dig into a filled space
             case 'd':
-                if(selectedAnt != -1){
+                if((selectedAnt != -1) && (moveAntPossible == true)){
                     moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
                     renderedMap = moveAntReturnValues.returnMap;
                     surfaceMap = moveAntReturnValues.returnSurfaceMap;
@@ -551,9 +553,9 @@ digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::stri
 }
 
 //if the ant is not currently touching the surface (be it above or bellow), it will move them to it.
-int findSurface(std::vector<std::string> renderedMap, cursorStruct cursor){
+int findSurface(std::vector<std::string> renderedMap, cursorStruct cursor, antStruct ant, int selectedAnt){
     //variable declaration and initialization
-    bool foundSurface = false;
+    bool finishedChecks = false;
     int surfaceLocation = 0;
     int checkIncrement = 0;
     int checkY = 0;
@@ -567,17 +569,36 @@ int findSurface(std::vector<std::string> renderedMap, cursorStruct cursor){
 
     //do the searching
     checkY = checkIncrement;
-    while(foundSurface != true){
-        if((renderedMap[cursor.posY + checkY][cursor.posX] == ' ') && (renderedMap[cursor.posY + checkY + 1][cursor.posX] != ' ')){
-            foundSurface = true;
-            surfaceLocation = cursor.posY + checkY;
+    while(finishedChecks != true){
+        if(renderedMap[cursor.posY + checkY][cursor.posX] == '#'){
+            finishedChecks = true;
+            surfaceLocation = ant.posY.at(selectedAnt);
+            break;
+        }
+        if((renderedMap[cursor.posY + checkY][cursor.posX] == ' ')){
+            if((renderedMap[cursor.posY + checkY + 1][cursor.posX] != ' ')
+               && (renderedMap[cursor.posY + checkY + 1][cursor.posX] != ant.character.at(selectedAnt))){
+                finishedChecks = true;
+                surfaceLocation = cursor.posY + checkY;
+            }else if((renderedMap[cursor.posY+ checkY][cursor.posX + 2] != ' ')
+                      && (renderedMap[cursor.posY + checkY][cursor.posX - 2] != ' ')){
+                finishedChecks = true;
+                surfaceLocation = cursor.posY + checkY;
+            }else if((renderedMap[cursor.posY + checkY][cursor.posX + 1] != ' ')
+                      && (renderedMap[cursor.posY + checkY][cursor.posX + 1] != '#')){
+                finishedChecks = true;
+                surfaceLocation = cursor.posY + checkY;
+            }else if((renderedMap[cursor.posY + checkY][cursor.posX - 1] != ' ')
+                      && (renderedMap[cursor.posY + checkY][cursor.posX - 1] != '#')){
+                finishedChecks = true;
+                surfaceLocation = cursor.posY + checkY;
+            }
         }
         checkY = checkY + checkIncrement;
     }
 
     return surfaceLocation;
 }
-
 
 //select an ant to give commands to
 int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap){
@@ -604,7 +625,6 @@ moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct curso
     //declare the initial values
     int travelY;
     int travelX;
-    int surfaceY;
     moveAntReturn returnData;
     travelX = 0;
     travelY = 0;
@@ -615,7 +635,7 @@ moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct curso
         if((checkForGround(ant, renderedMap, cursor, selectedAnt) != false) && (renderedMap[cursor.posY][cursor.posX] == ' ')){
             travelY = cursor.posY - ant.posY.at(selectedAnt);
         }else{
-            travelY = findSurface(renderedMap, cursor) - ant.posY.at(selectedAnt);
+            travelY = findSurface(renderedMap, cursor, ant, selectedAnt) - ant.posY.at(selectedAnt);
         }
     }else if(currentMap == "Underground"){
         travelY = cursor.posY - ant.posY.at(selectedAnt);
