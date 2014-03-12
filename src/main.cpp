@@ -78,12 +78,12 @@ bool checkForGround(antStruct ant, std::vector<std::string> renderedMap, cursorS
 createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int tick, std::string currentMap);
 digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
 digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::string> undergroundMap, antStruct ant, int selectedAnt);
+int findSurface(std::vector<std::string> renderedMap, cursorStruct cursor);
 int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap);
 moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::string currentMap,
                                std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
 moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor);
 std::string viewMenu();
-std::vector<int> findSurface(std::vector<std::string> renderedMap, cursorStruct cursor);
 std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor);
 std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor);
 void displayInfoWindow();
@@ -103,12 +103,17 @@ int main(){
     bool moveAntPossible = true;
     createAntReturn createAntReturnValues;
     digReturn digReturnValues;
-    int ch, tick, totalAnts;
+    int ch;
+    int tick;
+    int totalAnts;
     int selectedAnt = -1;
     moveAntReturn moveAntReturnValues;
     moveCursorReturn moveCursorReturnValues;
-    std::string chosenMenuOption, currentMap;
-    std::vector<std::string>  renderedMap, undergroundMap, surfaceMap;
+    std::string chosenMenuOption;
+    std::string currentMap;
+    std::vector<std::string>  renderedMap;
+    std::vector<std::string>  surfaceMap;
+    std::vector<std::string>  undergroundMap;
 
     //standard starting stuff for Curses
     initscr();
@@ -545,10 +550,40 @@ digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::stri
     return returnValues;
 }
 
+//if the ant is not currently touching the surface (be it above or bellow), it will move them to it.
+int findSurface(std::vector<std::string> renderedMap, cursorStruct cursor){
+    //variable declaration and initialization
+    bool foundSurface = false;
+    int surfaceLocation = 0;
+    int checkIncrement = 0;
+    int checkY = 0;
+
+    //find out which direction to search in
+    if(renderedMap[cursor.posY][cursor.posX] == ' '){
+        checkIncrement = 1;
+    }else if (renderedMap[cursor.posY][cursor.posX] != ' '){
+        checkIncrement = -1;
+    }
+
+    //do the searching
+    checkY = checkIncrement;
+    while(foundSurface != true){
+        if((renderedMap[cursor.posY + checkY][cursor.posX] == ' ') && (renderedMap[cursor.posY + checkY + 1][cursor.posX] != ' ')){
+            foundSurface = true;
+            surfaceLocation = cursor.posY + checkY;
+        }
+        checkY = checkY + checkIncrement;
+    }
+
+    return surfaceLocation;
+}
+
+
 //select an ant to give commands to
 int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap){
     //declaring variables
-    int selectedAnt, totalAnts;
+    int selectedAnt;
+    int totalAnts;
 
     //check all the ants until it finds one that matches the cursor coordinates
     totalAnts = ant.number.back();
@@ -567,7 +602,9 @@ int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap){
 moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct cursor, std::string currentMap,
                                std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap){
     //declare the initial values
-    int travelY, travelX;
+    int travelY;
+    int travelX;
+    int surfaceY;
     moveAntReturn returnData;
     travelX = 0;
     travelY = 0;
@@ -577,6 +614,8 @@ moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct curso
     if(currentMap == "Surface"){
         if((checkForGround(ant, renderedMap, cursor, selectedAnt) != false) && (renderedMap[cursor.posY][cursor.posX] == ' ')){
             travelY = cursor.posY - ant.posY.at(selectedAnt);
+        }else{
+            travelY = findSurface(renderedMap, cursor) - ant.posY.at(selectedAnt);
         }
     }else if(currentMap == "Underground"){
         travelY = cursor.posY - ant.posY.at(selectedAnt);
@@ -630,7 +669,16 @@ moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::str
 //create a menu where you will be able to choose quit, save, and load options
 std::string viewMenu(){
     //function variable declarations
-    int ch, height, width, windY, windX, titleX, menuItemX, menuItemY, curItemY, curItemNum;
+    int ch;
+    int height;
+    int width;
+    int windY;
+    int windX;
+    int titleX;
+    int menuItemX;
+    int menuItemY;
+    int curItemY;
+    int curItemNum;
     bool closeMenu = false;
     std::string curItem;
     WINDOW *gameMenuWindow;
@@ -711,13 +759,6 @@ std::string viewMenu(){
     return curItem;
 }
 
-//if the ant is not currently touching the surface (be it above or bellow), it will move them to it.
-std::vector<int> findSurface(std::vector<std::string> renderedMap, cursorStruct cursor){
-    std::vector<int> surfaceLocation;
-    //some code
-    return surfaceLocation;
-}
-
 //setup initial surface map
 std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor){
 
@@ -759,7 +800,10 @@ std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor){
 
     //map piece declaration.
     std::vector<std::string> initialMap;
-    std::string hexMapPiece1, hexMapPiece2, hexMapPiece3, hexMapPiece4;
+    std::string hexMapPiece1;
+    std::string hexMapPiece2;
+    std::string hexMapPiece3;
+    std::string hexMapPiece4;
     int pieceNumber = 1;
 
     hexMapPiece1.append("#::***:::::***:::::***:::::***:::::***:::::***:::::***:::::***:::::***:::::***:#");
@@ -815,7 +859,11 @@ std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor){
 //display the information window
 void displayInfoWindow(){
     //variable declaration
-    int ch, height, width, windY, windX;
+    int ch;
+    int height;
+    int width;
+    int windY;
+    int windX;
     int y = 4;
     int x = 0;
     std::vector<std::string> information;
@@ -943,7 +991,8 @@ void saveGame(std::vector<std::string>  renderedMap, std::vector<std::string> su
 //prints out all the information for the status area bellow the map
 void statusAreaPrint(antStruct ant, int selectedAnt){
     //variable declaration
-    std::string firstLineString, thirdLineString;
+    std::string firstLineString;
+    std::string thirdLineString;
     int commandX = 1;
     int totalCommands = 0;
     char commandKey = ' ';
@@ -993,7 +1042,12 @@ void statusAreaPrint(antStruct ant, int selectedAnt){
 void viewAnts(antStruct ant, int tick){
     //declaring function variables
     WINDOW *viewAntsWind;
-    int height, width, windY, windX, ch, totalAnts;
+    int height;
+    int width;
+    int windY;
+    int windX;
+    int ch;
+    int totalAnts;
     int lastAntShown = 0;
     int firstAntShown = 0;
 
