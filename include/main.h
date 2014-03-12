@@ -19,6 +19,8 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+const char* choices[] = {"Save", "Load", "Quit", "Close"};
+const char* menuTitle = "Game Menu";
 
 class main
 {
@@ -91,6 +93,7 @@ class main
                                        std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
         moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor);
         std::string viewMenu();
+        std::vector<int> findSurface(std::vector<std::string> renderedMap, cursorStruct cursor);
         std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor);
         std::vector<std::string> initialMapSetup(cursorStruct cursor);
         void displayInfoWindow();

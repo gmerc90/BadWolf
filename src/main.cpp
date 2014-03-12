@@ -83,6 +83,7 @@ moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct curso
                                std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
 moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor);
 std::string viewMenu();
+std::vector<int> findSurface(std::vector<std::string> renderedMap, cursorStruct cursor);
 std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor);
 std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor);
 void displayInfoWindow();
@@ -103,7 +104,7 @@ int main(){
     createAntReturn createAntReturnValues;
     digReturn digReturnValues;
     int ch, tick, totalAnts;
-    int selectedAnt = NULL;
+    int selectedAnt = -1;
     moveAntReturn moveAntReturnValues;
     moveCursorReturn moveCursorReturnValues;
     std::string chosenMenuOption, currentMap;
@@ -225,7 +226,7 @@ int main(){
 
             //clear selected ant with Shift + e
             case 'S':
-                selectedAnt = NULL;
+                selectedAnt = -1;
                 break;
 
             //move the selected ant to the location of the cursor
@@ -234,7 +235,7 @@ int main(){
                 if((currentMap == "Underground") && (renderedMap[cursor.posY][cursor.posX] != ' ')){
                     moveAntPossible = false;
                 }
-                if((selectedAnt != NULL) && (moveAntPossible == true)){
+                if((selectedAnt != -1) && (moveAntPossible == true)){
                     moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
                     renderedMap = moveAntReturnValues.returnMap;
                     surfaceMap = moveAntReturnValues.returnSurfaceMap;
@@ -246,7 +247,7 @@ int main(){
 
             //dig into a filled space
             case 'd':
-                if(selectedAnt != NULL){
+                if(selectedAnt != -1){
                     moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
                     renderedMap = moveAntReturnValues.returnMap;
                     surfaceMap = moveAntReturnValues.returnSurfaceMap;
@@ -556,7 +557,7 @@ int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap){
             selectedAnt = i;
             break;
         }else{
-            selectedAnt = NULL;
+            selectedAnt = -1;
         }
     }
     return selectedAnt;
@@ -629,8 +630,6 @@ moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::str
 //create a menu where you will be able to choose quit, save, and load options
 std::string viewMenu(){
     //function variable declarations
-    char *choices[] = {"Save", "Load", "Quit", "Close"};
-    char *menuTitle = "Game Menu";
     int ch, height, width, windY, windX, titleX, menuItemX, menuItemY, curItemY, curItemNum;
     bool closeMenu = false;
     std::string curItem;
@@ -673,10 +672,12 @@ std::string viewMenu(){
                 if(curItemNum + 1 <= 3){
                     wmove(gameMenuWindow, curItemY, 0);
                     wclrtoeol(gameMenuWindow);
-                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2), choices[curItemNum]);
+                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2)
+                              , choices[curItemNum]);
                     curItemNum = curItemNum + 1;
                     curItemY = curItemY + 1;
-                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2), "%s<", choices[curItemNum]);
+                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2)
+                              , "%s<", choices[curItemNum]);
                     box(gameMenuWindow, 0, 0);
                 }
                 break;
@@ -684,10 +685,12 @@ std::string viewMenu(){
                 if(curItemNum - 1 >= 0){
                     wmove(gameMenuWindow, curItemY, 0);
                     wclrtoeol(gameMenuWindow);
-                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2), choices[curItemNum]);
+                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2)
+                              , choices[curItemNum]);
                     curItemNum = curItemNum - 1;
                     curItemY = curItemY - 1;
-                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2), "%s<", choices[curItemNum]);
+                    mvwprintw(gameMenuWindow, curItemY, ((width - strlen(choices[curItemNum])) / 2)
+                              , "%s<", choices[curItemNum]);
                     box(gameMenuWindow, 0, 0);
                 }
                 break;
@@ -706,6 +709,13 @@ std::string viewMenu(){
     delwin(gameMenuWindow);
     clear();
     return curItem;
+}
+
+//if the ant is not currently touching the surface (be it above or bellow), it will move them to it.
+std::vector<int> findSurface(std::vector<std::string> renderedMap, cursorStruct cursor){
+    std::vector<int> surfaceLocation;
+    //some code
+    return surfaceLocation;
 }
 
 //setup initial surface map
@@ -807,7 +817,7 @@ void displayInfoWindow(){
     //variable declaration
     int ch, height, width, windY, windX;
     int y = 4;
-    int x = NULL;
+    int x = 0;
     std::vector<std::string> information;
     WINDOW *infoWindow;
 
@@ -935,11 +945,16 @@ void statusAreaPrint(antStruct ant, int selectedAnt){
     //variable declaration
     std::string firstLineString, thirdLineString;
     int commandX = 1;
-    int totalCommands = ant.availableCommands.at(selectedAnt).size() - 1;
+    int totalCommands = 0;
     char commandKey = ' ';
 
     firstLineString.append("F1: Menu | F2: View Ants | F3: Toggle Map | F4: More Info");
     thirdLineString.append("Available Commands");
+
+    //check to see if there is an ant selected, if there is, get the total amount of commands
+    if(selectedAnt != -1){
+        totalCommands = ant.availableCommands.at(selectedAnt).size() - 1;
+    }
 
     //clear the status area
     move(25, 0);
@@ -949,7 +964,7 @@ void statusAreaPrint(antStruct ant, int selectedAnt){
     mvprintw(25, 1, "%s", firstLineString.c_str());
 
     //checks to see if ant is selected then prints the appropriate information
-    if(selectedAnt != NULL){
+    if(selectedAnt != -1){
         move(26, 0);
         clrtoeol();
         mvprintw(26, 1, "Number: %d | Type: %s | Age: %d", ant.number.at(selectedAnt), ant.type.at(selectedAnt).c_str(), ant.age.at(selectedAnt));
@@ -960,7 +975,7 @@ void statusAreaPrint(antStruct ant, int selectedAnt){
     }
 
     //print the available commands
-    if(selectedAnt != NULL){
+    if(selectedAnt != -1){
         mvprintw(27, 1, "%s", thirdLineString.c_str());
         for(int i = 0; i <= totalCommands; i++){
             commandKey = ant.availableCommands.at(selectedAnt).at(i).at(0);
@@ -978,7 +993,9 @@ void statusAreaPrint(antStruct ant, int selectedAnt){
 void viewAnts(antStruct ant, int tick){
     //declaring function variables
     WINDOW *viewAntsWind;
-    int height, width, windY, windX, ch, totalAnts, lastAntShown, firstAntShown;
+    int height, width, windY, windX, ch, totalAnts;
+    int lastAntShown = 0;
+    int firstAntShown = 0;
 
     //ant window variable default values
     height = 20;
