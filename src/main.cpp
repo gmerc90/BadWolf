@@ -74,7 +74,8 @@ struct createAntReturn{
     std::vector<std::string> returnMap;
 };
 
-createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int tick, std::string currentMap);
+bool checkForAnt(antStruct ant);
+createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, int y, int x, int tick, std::string currentMap);
 digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
 digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::string> undergroundMap, antStruct ant, int selectedAnt);
 int selectAnt(antStruct ant, cursorStruct cursor, std::string currentMap);
@@ -82,6 +83,7 @@ moveAntReturn moveSelectedAnt(int selectedAnt, antStruct ant, cursorStruct curso
                                std::vector<std::string> renderedMap, std::vector<std::string> surfaceMap, std::vector<std::string> undergroundMap);
 moveCursorReturn moveCursor(int moveValueY, int moveValueX, std::vector<std::string> renderedMap, cursorStruct cursor);
 std::string viewMenu();
+std::vector<int> findEmptySpace(std::vector<std::string> rendredMap, int y, int x);
 std::vector<std::string> initialSurfaceMapSetup(cursorStruct cursor);
 std::vector<std::string> initialUndergroundMapSetup(cursorStruct cursor);
 void displayInfoWindow();
@@ -106,10 +108,14 @@ int main(){
     int tick;
     int totalAnts;
     int selectedAnt = -1;
+    int antsToCreate = 0;
+    int createAntY = 0;
+    int createAntX = 0;
     moveAntReturn moveAntReturnValues;
     moveCursorReturn moveCursorReturnValues;
     std::string chosenMenuOption;
     std::string currentMap;
+    std::vector<int> createAntYXChange;
     std::vector<std::string>  renderedMap;
     std::vector<std::string>  surfaceMap;
     std::vector<std::string>  undergroundMap;
@@ -277,12 +283,40 @@ int main(){
                 }
                 break;
 
+            //the queen will eat her wings and create a random amount of ants to start with
+            case 'e':
+                //set the size of createAntYXChange and set the initial values to 0.
+                createAntYXChange.resize(2);
+                createAntYXChange.at(0) = 0;
+                createAntYXChange.at(1) = 0;
+
+                //checks to see if the selected ant does have wings, and if it does,
+                //goes through the process of creating a random amount of ants
+                if(ant.wings.at(selectedAnt) == true){
+                    antsToCreate = rand() % 4 + 2;
+                    createAntY = ant.posY.at(selectedAnt) + 1;
+                    createAntX = ant.posX.at(selectedAnt);
+                    for(int i = 1; i <= antsToCreate; i++){
+                        createAntReturnValues = createAnt(ant, renderedMap, createAntY,
+                                                           createAntX, tick, currentMap);
+                        ant = createAntReturnValues.returnAnt;
+                        renderedMap = createAntReturnValues.returnMap;
+                        createAntYXChange = findEmptySpace(renderedMap, createAntY, createAntX);
+                        createAntY = createAntYXChange.at(0);
+                        createAntX = createAntYXChange.at(1);
+                    }
+                }
+                refreshMap(renderedMap, cursor);
+                break;
+
             //create ants with their initial value
             case 'c':
-                createAntReturnValues = createAnt(ant, renderedMap, cursor, tick, currentMap);
-                ant = createAntReturnValues.returnAnt;
-                renderedMap = createAntReturnValues.returnMap;
-                refreshMap(renderedMap, cursor);
+                if(checkForAnt(ant) == false){
+                    createAntReturnValues = createAnt(ant, renderedMap, cursor.posY, cursor.posX, tick, currentMap);
+                    ant = createAntReturnValues.returnAnt;
+                    renderedMap = createAntReturnValues.returnMap;
+                    refreshMap(renderedMap, cursor);
+                }
                 break;
 
             //bring up game menu
@@ -373,33 +407,39 @@ int main(){
     return 0;
 }
 
+//checks to see if an ant already exists at the location
+bool checkForAnt(antStruct ant){
+    ///fixme
+    bool antExists = false;
+    /*for(int i = 0; i <= ant.number.back(); i++){
+        if((y == ant.posY.at(i)) && (x == ant.posX.at(i))){
+            antExists = true;
+        }
+    }*/
+    return antExists;
+}
+
 //creates an ant when requested
-createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, cursorStruct cursor, int tick, std::string currentMap){
+createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, int y, int x, int tick, std::string currentMap){
 
     //variable declarations
-    bool antExists = false;
     createAntReturn returnValues;
     int vectorSize;
 
-    //checks to see if an ant already exists at the location
-    for(int i = 0; i <= ant.number.back(); i++){
-        if((cursor.posY == ant.posY.at(i)) && (cursor.posX == ant.posX.at(i))){
-            antExists = true;
-        }
-    }
+
     //if an ant does not already exists at the location, an ant will be created
-    if((antExists == false) && (renderedMap[cursor.posY][cursor.posX] == ' ')){
-        if(renderedMap[cursor.posY][cursor.posX] != '*'){
+    if(renderedMap[y][x] == ' '){
+        if(renderedMap[y][x] != '*'){
             vectorSize = ant.number.back() + 1;
             ant.number.push_back(vectorSize);
             ant.age.push_back(0);
             ant.birthTick.push_back(tick);
             ant.character.push_back('e');
-            ant.replaceCharacter.push_back(renderedMap[cursor.posY][cursor.posX]);
+            ant.replaceCharacter.push_back(renderedMap[y][x]);
             ant.type.push_back("Egg");
             ant.wings.push_back(false);
-            ant.posX.push_back(cursor.posX);
-            ant.posY.push_back(cursor.posY);
+            ant.posX.push_back(x);
+            ant.posY.push_back(y);
             ant.location.push_back(currentMap);
             ant.availableCommands.resize(vectorSize + 1);
             ant.availableCommands.at(vectorSize).resize(1);
@@ -467,14 +507,12 @@ digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::stri
     //variable declaration
     char digReplaceChar = ' ';
     char replaceChar = ':';
-    int digChangeValues[] = {0, 1, -1};
-    int replaceValues[] = {2, -2, 3, -3, 4, -4, 5, -5};
     int posYChangeA[] = { -1, -1, 0, 1, 1, 1, 0, -1};
     int posXChangeA[] = { 0, 1, 1, 1, 0, -1, -1, -1};
     int posYChangeB[] = { -1, 0, 1, 0};
     int posXChangeB[] = { 0, 1, 0, -1};
     int posNegOne[] = { 1, -1};
-    int x, y, j;
+    int x, y;
     digReturn returnValues;
 
     x = ant.posX.at(selectedAnt);
@@ -695,6 +733,29 @@ std::string viewMenu(){
     delwin(gameMenuWindow);
     clear();
     return curItem;
+}
+
+//find an empty space if the specified space is occupied
+std::vector<int> findEmptySpace(std::vector<std::string> rendredMap, int y, int x){
+    //declare variables
+    bool foundEmptySpace = false;
+    std::vector<int> returnYXVector;
+    int checkY[] = {-1, 0, 1, 0};
+    int checkX[] = {0, 1, 0, -1};
+
+    returnYXVector.resize(2);
+    returnYXVector.at(0) = 0;
+    returnYXVector.at(1) = 0;
+    while(foundEmptySpace != true){
+        for(int i = 0; i < 4; i++){
+            if(rendredMap[y + checkY[i]][x + checkX[i]] == ' '){
+                returnYXVector.at(0) = y + checkY[i];
+                returnYXVector.at(1) = x + checkX[i];
+                foundEmptySpace = true;
+            }
+        }
+    }
+    return returnYXVector;
 }
 
 //setup initial surface map
