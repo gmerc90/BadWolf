@@ -74,7 +74,7 @@ struct createAntReturn{
     std::vector<std::string> returnMap;
 };
 
-bool checkForAnt(antStruct ant);
+bool checkForAnt(antStruct ant, cursorStruct cursor);
 createAntReturn createAnt(antStruct ant, std::vector<std::string> renderedMap, int y, int x, int tick, std::string currentMap);
 digReturn undergroundDig(std::vector<std::string>  renderedMap, antStruct ant, int selectedAnt);
 digReturn surfaceDig(std::vector<std::string> renderedMap, std::vector<std::string> undergroundMap, antStruct ant, int selectedAnt);
@@ -176,14 +176,14 @@ int main(){
     ant.posX.resize(1);
     ant.posX.push_back(COLS / 2);
     ant.posY.resize(1);
-    ant.posY.push_back(19);
+    ant.posY.push_back((LINES - 5) / 2);
     ant.location.resize(1);
     ant.location.push_back(currentMap);
     ant.availableCommands.resize(2);
     ant.availableCommands.at(1).resize(1);
     ant.availableCommands.at(1).at(0).append("Move");
     ant.availableCommands.at(1).push_back("Dig");
-    ant.availableCommands.at(1).push_back("Eat Wings");
+    ant.availableCommands.at(1).push_back("Eat Wing Muscles");
     renderedMap[ant.posY.at(1)][ant.posX.at(1)] = ant.character.at(1);
     refreshMap(renderedMap, cursor);
 
@@ -260,7 +260,7 @@ int main(){
 
             //dig into a filled space
             case 'd':
-                if((selectedAnt != -1) && (moveAntPossible == true)){
+                if(selectedAnt != -1){
                     moveAntReturnValues = moveSelectedAnt(selectedAnt, ant, cursor, currentMap, renderedMap, surfaceMap, undergroundMap);
                     renderedMap = moveAntReturnValues.returnMap;
                     surfaceMap = moveAntReturnValues.returnSurfaceMap;
@@ -271,8 +271,7 @@ int main(){
                         renderedMap = digReturnValues.returnMap;
                         ant = digReturnValues.returnAnt;
                         refreshMap(renderedMap, cursor);
-                    }else if((currentMap == "Surface") && (renderedMap[ant.posY.at(selectedAnt) + 1][ant.posX.at(selectedAnt)] == '=')
-                             && antHillExists == false){
+                    }else if((currentMap == "Surface") && (antHillExists == false)){
                         digReturnValues = surfaceDig(renderedMap, undergroundMap, ant, selectedAnt);
                         renderedMap = digReturnValues.returnMap;
                         ant = digReturnValues.returnAnt;
@@ -293,9 +292,10 @@ int main(){
                 //checks to see if the selected ant does have wings, and if it does,
                 //goes through the process of creating a random amount of ants
                 if(ant.wings.at(selectedAnt) == true){
-                    antsToCreate = rand() % 4 + 2;
-                    createAntY = ant.posY.at(selectedAnt) + 1;
-                    createAntX = ant.posX.at(selectedAnt);
+                    antsToCreate = rand() % 2 + 2;
+                    createAntYXChange = findEmptySpace(renderedMap, ant.posY.at(selectedAnt), ant.posX.at(selectedAnt));
+                    createAntY = createAntYXChange.at(0);
+                    createAntX = createAntYXChange.at(1);
                     for(int i = 1; i <= antsToCreate; i++){
                         createAntReturnValues = createAnt(ant, renderedMap, createAntY,
                                                            createAntX, tick, currentMap);
@@ -311,7 +311,7 @@ int main(){
 
             //create ants with their initial value
             case 'c':
-                if(checkForAnt(ant) == false){
+                if(checkForAnt(ant, cursor) == false){
                     createAntReturnValues = createAnt(ant, renderedMap, cursor.posY, cursor.posX, tick, currentMap);
                     ant = createAntReturnValues.returnAnt;
                     renderedMap = createAntReturnValues.returnMap;
@@ -408,14 +408,15 @@ int main(){
 }
 
 //checks to see if an ant already exists at the location
-bool checkForAnt(antStruct ant){
-    ///fixme
+bool checkForAnt(antStruct ant, cursorStruct cursor){
     bool antExists = false;
-    /*for(int i = 0; i <= ant.number.back(); i++){
-        if((y == ant.posY.at(i)) && (x == ant.posX.at(i))){
+
+    for(int i = 0; i <= ant.number.back(); i++){
+        if((cursor.posY == ant.posY.at(i)) && (cursor.posX == ant.posX.at(i))){
             antExists = true;
+            break;
         }
-    }*/
+    }
     return antExists;
 }
 
