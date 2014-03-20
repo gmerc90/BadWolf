@@ -305,6 +305,8 @@ int main(){
                         createAntY = createAntYXChange.at(0);
                         createAntX = createAntYXChange.at(1);
                     }
+                    ///ant.wings.at(selectedAnt) = false;
+                    ///ant.availableCommands.at(selectedAnt).resize(2);
                 }
                 refreshMap(renderedMap, cursor);
                 break;
@@ -348,16 +350,18 @@ int main(){
 
             //toggle view between the surface and underground
             case KEY_F(3):
-                if(currentMap == "Surface"){
-                    surfaceMap = renderedMap;
-                    renderedMap = undergroundMap;
-                    currentMap = "Underground";
-                }else if(currentMap == "Underground"){
-                    undergroundMap = renderedMap;
-                    renderedMap = surfaceMap;
-                    currentMap = "Surface";
+                if(antHillExists == true){
+                    if(currentMap == "Surface"){
+                        surfaceMap = renderedMap;
+                        renderedMap = undergroundMap;
+                        currentMap = "Underground";
+                    }else if(currentMap == "Underground"){
+                        undergroundMap = renderedMap;
+                        renderedMap = surfaceMap;
+                        currentMap = "Surface";
+                    }
+                    refreshMap(renderedMap, cursor);
                 }
-                refreshMap(renderedMap, cursor);
                 break;
 
             //display an information window
@@ -741,8 +745,8 @@ std::vector<int> findEmptySpace(std::vector<std::string> rendredMap, int y, int 
     //declare variables
     bool foundEmptySpace = false;
     std::vector<int> returnYXVector;
-    int checkY[] = {-1, 0, 1, 0};
-    int checkX[] = {0, 1, 0, -1};
+    int checkY[] = {0, 0, 1, -1};
+    int checkX[] = {-1, 1, 0, 0};
 
     returnYXVector.resize(2);
     returnYXVector.at(0) = 0;
@@ -753,6 +757,7 @@ std::vector<int> findEmptySpace(std::vector<std::string> rendredMap, int y, int 
                 returnYXVector.at(0) = y + checkY[i];
                 returnYXVector.at(1) = x + checkX[i];
                 foundEmptySpace = true;
+                break;
             }
         }
     }
